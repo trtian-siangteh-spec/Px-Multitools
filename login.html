@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        :root {
+            /* Light Mode: White background, Blue elements, Black text */
+            --bg-gradient-start: #fff; /* Pure White */
+            --bg-gradient-end: #fff; /* Pure White */
+            --sub-color: #007AFF; /* A standard iOS Blue */
+            --sub-color-hover-shadow: rgba(0, 122, 255, 0.6);
+            --sub-color-focus-shadow: rgba(0, 122, 255, 0.5);
+            --sub-color-focus-border: rgba(0, 122, 255, 0.8);
+            
+            --text-primary: #000; /* Black text */
+            --text-secondary: #333; /* Dark gray text */
+            --text-placeholder: #555; /* Medium gray text */
+            
+            --white-glass: rgba(242, 242, 247, 0.7); /* iOS standard light glass */
+            --white-border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.05); /* Light gray input */
+            
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+
+            --success-color: green;
+            --error-color: #D32F2F;
+        }
+
+        /* Dark Mode: Black background, Blue elements, White text */
+        /* This is now triggered by the data-theme attribute */
+        html[data-theme="dark"] {
+            --bg-gradient-start: #000; /* Pure Black */
+            --bg-gradient-end: #000; /* Pure Black */
+            
+            /* Sub color (blue) remains the same */
+            
+            --text-primary: #FFF; /* White text */
+            --text-secondary: #E0E0E0; /* Light gray text */
+            --text-placeholder: #999; /* Medium gray text */
+            
+            /* Glass becomes dark */
+            --white-glass: rgba(28, 28, 30, 0.7); /* iOS standard dark glass */
+            --white-border: rgba(255, 255, 255, 0.1); /* Faint white border */
+            --input-bg: rgba(70, 70, 70, 0.5); /* Darker input */
+
+            --shadow: 0 8px 32px 0 rgba(0, 122, 255, 0.15); /* Blueish shadow */
+            
+            --success-color: #34C759; /* Brighter green for dark bg */
+            --error-color: #FF3B30; /* Brighter red for dark bg */
+        }
+        
+        /* Fallback for initial load if JS is slow */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg-gradient-start: #000;
+                --bg-gradient-end: #000;
+                --text-primary: #FFF;
+                --text-secondary: #E0E0E0;
+                --text-placeholder: #999;
+                --white-glass: rgba(28, 28, 30, 0.7);
+                --white-border: rgba(255, 255, 255, 0.1);
+                --input-bg: rgba(70, 70, 70, 0.5);
+                --shadow: 0 8px 32px 0 rgba(0, 122, 255, 0.15);
+                --success-color: #34C759;
+                --error-color: #FF3B30;
+            }
+        }
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Light/Dark mode background gradient */
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-secondary); /* Dynamic text color (black/white) */
+            transition: background 0.3s ease; /* Added transition */
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            margin: 1rem;
+
+            /* This is the "Liquid Glass" or "iOS" style */
+            background: var(--white-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            
+            /* The shadow */
+            box-shadow: var(--shadow);
+            
+            /* Rounded corners and a subtle border are key to the glass look */
+            border-radius: 24px;
+            border: 1px solid var(--white-border);
+            
+            text-align: center;
+            transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease; /* Added transition */
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary); /* Dynamic text color (black/white) */
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* This is the "iOS 26 style" input box */
+        input {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--white-border);
+            /* Inset, glassy look */
+            background: var(--input-bg);
+            border-radius: 12px;
+            color: var(--text-primary); /* Dynamic text color (black/white) */
+            font-weight: 500;
+            
+            /* Removes the default browser styling */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            
+            transition: all 0.3s ease;
+        }
+
+        /* Style for the placeholder text */
+        input::placeholder {
+            color: var(--text-placeholder); /* Dynamic placeholder color */
+            font-weight: 400;
+        }
+
+        /* Add a subtle glow when the user clicks the box */
+        input:focus {
+            outline: none;
+            border-color: var(--sub-color-focus-border);
+            box-shadow: 0 0 10px var(--sub-color-focus-shadow);
+        }
+
+        /* The button with your sub-color (blue) */
+        button {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 1rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            
+            background-color: var(--sub-color);
+            color: #FFF; /* White text on blue button always looks good */
+            
+            /* This makes the animation smooth */
+            transition: all 0.3s ease;
+        }
+
+        /* This is the "pop up animation" on mouse touch (hover) */
+        button:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 6px 20px var(--sub-color-hover-shadow);
+        }
+        
+        button:active {
+            /* A little "press" effect */
+            transform: scale(0.98);
+        }
+
+        /* This message will show login success or failure */
+        #message {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            height: 20px; /* Reserve space so the box doesn't jump */
+        }
+
+        .message-success {
+            color: var(--success-color);
+        }
+
+        .message-error {
+            color: var(--error-color);
+        }
+
+    </style>
+</head>
+<body>
+    
+    <script>
+        // If the user is already logged in, send them straight to the home page
+        // Changed to use sessionStorage to match home.html
+        if (sessionStorage.getItem('cm_v7_session')) {
+            window.location.href = 'home.html';
+        }
+    </script>
+    
+    <script>
+        // This script block must be high in the <body> to prevent flashing
+        (function() {
+            const htmlEl = document.documentElement;
+            
+            function setTheme(theme) {
+                htmlEl.setAttribute('data-theme', theme);
+            }
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(prefersDark ? 'dark' : 'light');
+            }
+        })();
+    </script>
+    
+    <script>
+        (function() {
+            if (!localStorage.getItem('cm_credentials')) {
+                const defaultCreds = {
+                    username: 'admin',
+                    password: '1234'
+                };
+                localStorage.setItem('cm_credentials', JSON.stringify(defaultCreds));
+                console.log('Default credentials initialized in localStorage.');
+            }
+        })();
+    </script>
+    
+    <div class="login-box">
+        <h1>Welcome</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="ID" required>
+            
+            <input type="password" id="password" placeholder="Password" required>
+            
+            <button type="submit">Login</button>
+        </form>
+        
+        <p id="message"></p>
+    </div>
+
+    <script>
+              const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const messageElement = document.getElementById('message');
+
+                loginForm.addEventListener('submit', function(event) {
+            
+                       event.preventDefault(); 
+
+                        const username = usernameInput.value;
+            const password = passwordInput.value;            try {
+                const storedCreds = JSON.parse(localStorage.getItem('cm_credentials'));
+
+                if (username === storedCreds.username && password === storedCreds.password) {
+                    // Success!
+                    messageElement.textContent = 'Login Successful!';
+                    messageElement.className = 'message-success';
+                    
+                    // Save the login status in the browser using sessionStorage
+                    sessionStorage.setItem('cm_v7_session', 'true'); // Matches home.html check
+                    
+                    // Redirect to home page after 1 second
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1000); // 1000 milliseconds = 1 second
+
+                } else {
+                    // Failed
+                    messageElement.textContent = 'Invalid ID or Password';
+                    messageElement.className = 'message-error';
+                }
+            } catch (e) {
+                // Handle potential error if localStorage is corrupted or missing
+                messageElement.textContent = 'Error reading credentials. Contact admin.';
+                messageElement.className = 'message-error';
+                console.error('Login error:', e);
+            }
+            // --- END OF MODIFIED LOGIC ---
+        });
+    </script>
+
+</body>
+</html>

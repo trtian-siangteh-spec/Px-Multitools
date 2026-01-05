@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Calculator History - Cable Management System</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        :root {
+            --ios-blue: #007aff;
+            --ios-gray: #f2f2f7;
+            --ios-gray-dark: #1c1c1e;
+            --ios-label-color-light: #fff;
+            --ios-label-color-dark: #000;
+            --ios-red: #ff3b30;
+            
+            /* --- MODIFIED: Light Mode UI --- */
+            --page-bg: #fff; /* Plain white */
+            --body-color: var(--ios-label-color-dark); /* Black text */
+            --text-muted: #666;
+            --text-muted-empty: #666;
+            --ios-glass-bg: rgba(248, 248, 248, 0.85); /* Slightly opaque light glass */
+            --ios-glass-border: rgba(0, 0, 0, 0.08);
+            --back-btn-bg: rgba(255,255,255,0.8);
+            --back-btn-color: #333;
+            --theme-toggle-bg: rgba(255,255,255,0.8);
+            --theme-toggle-color: #333;
+            
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+        
+        html[data-theme="dark"] {
+            /* --- MODIFIED: Dark Mode UI --- */
+            --page-bg: #000; /* Plain black */
+            --body-color: var(--ios-label-color-light); /* White text */
+            --text-muted: #999;
+            --text-muted-empty: #888;
+            --ios-glass-bg: rgba(28, 28, 30, 0.85); /* Slightly opaque dark glass */
+            --ios-glass-border: rgba(255, 255, 255, 0.15);
+            --back-btn-bg: rgba(28, 28, 30, 0.8);
+            --back-btn-color: #fff;
+            --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+            --theme-toggle-color: #fff;
+            
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Fallback */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --page-bg: #000;
+                --body-color: var(--ios-label-color-light);
+                --text-muted: #999;
+                --text-muted-empty: #888;
+                --ios-glass-bg: rgba(28, 28, 30, 0.85);
+                --ios-glass-border: rgba(255, 255, 255, 0.15);
+                --back-btn-bg: rgba(28, 28, 30, 0.8);
+                --back-btn-color: #fff;
+                --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+                --theme-toggle-color: #fff;
+                --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+                --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+            }
+        }
+        
+        /* --- 1. Base & Layout --- */
+        html { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--page-bg);
+            color: var(--body-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .page-container {
+            padding-top: 80px; /* Space for buttons */
+            padding-bottom: 60px;
+        }
+        .app-wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        @keyframes page-enter-animation {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-enter {
+            animation: page-enter-animation 0.4s ease-out;
+        }
+
+        /* --- 2. Header & Buttons --- */
+        /* === MODIFIED: .back-btn for shadow and centering === */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            font-size: 24px;
+            font-weight: 400; 
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            cursor: pointer;
+            background: var(--back-btn-bg);
+            color: var(--back-btn-color);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main);
+            backdrop-filter: blur(10px);
+            
+            /* Added for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-btn:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            cursor: pointer;
+            background: var(--theme-toggle-bg);
+            box-shadow: var(--shadow-main);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            
+            /* Added for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-toggle:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .theme-toggle .icon-sun,
+        .theme-toggle .icon-moon {
+            font-size: 20px;
+            color: var(--theme-toggle-color);
+        }
+        html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+        html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .h2 {
+            font-size: 17px;
+            font-weight: 400;
+            color: #8a8a8e;
+            margin: 4px 0 0 0;
+        }
+
+        /* --- 3. History Item (Themed) --- */
+        .history-item {
+            background: var(--ios-glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--ios-glass-border);
+            box-shadow: var(--shadow-main); /* MODIFIED SHADOW */
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover); /* MODIFIED SHADOW */
+        }
+        
+        .history-params {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        
+        .history-result {
+            font-weight: 600;
+            color: var(--ios-blue);
+            margin-top: 8px;
+        }
+        
+        .history-timestamp {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* --- 4. Other UI (Themed) --- */
+        .clear-history {
+            background: var(--ios-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            opacity: 0.9;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main); /* ADDED SHADOW */
+        }
+        .clear-history:hover { 
+            opacity: 1; 
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted-empty);
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<script>
+    if (!sessionStorage.getItem('cm_v7_session')) window.location.href = 'login.html';
+</script>
+
+<body class="page-container">
+
+    <button class="back-btn" onclick="goBack()">‹</button>
+    <button id="themeToggle" class="theme-toggle">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+    </button>
+    
+    <div class="app-wrap">
+        <div class="topbar page-enter">
+            <div>
+                <h1 class="h1">Calculation History</h1>
+                <div class="h2">Review past safety factor calculations</div>
+            </div>
+        </div>
+        
+        <div id="history-list" class="page-enter">
+            </div>
+        
+        <button id="clear-history" class="clear-history page-enter">Clear All History</button>
+    </div>
+
+    <script>
+        // === ADDED: Go Back function ===
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'F-Safety Factor Calculator.html'; // Fallback
+            }
+        }
+
+        // === ADDED: Theme toggle logic ===
+        function initializeTheme() {
+            const htmlEl = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            function setTheme(theme) {
+                htmlEl.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = htmlEl.getAttribute('data-theme');
+                    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+                });
+            }
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(prefersDark ? 'dark' : 'light');
+            }
+        }
+    </script>
+
+    <script>
+        // --- Page Specific Logic --- (UNMODIFIED)
+        const HISTORY_KEY = 'safety_history';
+
+        function loadHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            
+            if (history.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🗂</div>
+                        <h3>No History Found</h3>
+                        <p>Your saved calculations will appear here.</p>
+                    </div>
+                `;
+                document.getElementById('clear-history').style.display = 'none';
+                return;
+            }
+            
+            // Sort by most recent
+            history.sort((a, b) => b.timestamp - a.timestamp);
+            
+            list.innerHTML = history.map(record => `
+                <div class="history-item" onclick="replayCalculation(${record.id})">
+                    <strong>${record.summary}</strong>
+                    <div class="history-result">Result: ${record.result}</div>
+                    <div class="history-params">Params: ${JSON.stringify(record.params)}</div>
+                    <div class="history-timestamp">${new Date(record.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+            document.getElementById('clear-history').style.display = 'block';
+        }
+        
+        function replayCalculation(id) {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const record = history.find(r => r.id === id);
+            
+            if (record) {
+                // Save this record for replay
+                localStorage.setItem('safety_replay', JSON.stringify({
+                    summary: record.summary,
+                    result: record.result,
+                    timestamp: record.timestamp,
+                    params: record.params // Pass params back
+                }));
+                // Redirect to calculator
+                window.location.href = 'F-Safety Factor Calculator.html';
+            }
+        }
+        
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all calculation history? This cannot be undone.')) {
+                localStorage.removeItem(HISTORY_KEY);
+                loadHistory();
+                showMessage('History cleared successfully', 'info', 2000);
+            }
+        }
+        
+        // Show message function
+        function showMessage(message, type = 'info', duration = 3000) {
+            const box = document.createElement('div');
+            box.textContent = message;
+            box.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'error' ? 'var(--ios-red)' : 'var(--ios-blue)'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 10px;
+                z-index: 1000;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                font-weight: 600;
+            `;
+            document.body.appendChild(box);
+            
+            setTimeout(() => {
+                if (box.parentNode) box.parentNode.removeChild(box);
+            }, duration);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme(); // === ADDED ===
+            loadHistory();
+            
+            document.getElementById('clear-history').addEventListener('click', clearHistory);
+            
+            // Back button
+            const backBtn = document.querySelector('.back-btn');
+            if (backBtn) {
+                backBtn.style.display = (window.history.length > 1) ? 'flex' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>

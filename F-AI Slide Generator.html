@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover"/>
+    <title>AI Slide Generator Pro</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script id="pptx-script" src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.min.js"></script>
+    
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --ios-blue: #007aff;
+            --ios-gray: #f2f2f7;
+            --ios-glass-bg: rgba(255, 255, 255, 0.9);
+            --ios-glass-border: rgba(0, 0, 0, 0.15);
+            --ios-input-bg: rgba(118, 118, 128, 0.12);
+            --page-bg: #f5f5f7;
+            --text-primary: #1c1c1e;
+        }
+
+        html[data-theme='dark'] {
+            --ios-blue: #0a84ff;
+            --ios-glass-bg: rgba(28, 28, 30, 0.85);
+            --ios-glass-border: rgba(255, 255, 255, 0.2);
+            --ios-input-bg: rgba(118, 118, 128, 0.24);
+            --page-bg: #000;
+            --text-primary: #fff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--page-bg);
+            color: var(--text-primary);
+            margin: 0; padding: 20px;
+            min-height: 100vh;
+            transition: background 0.3s;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; margin-bottom: 20px;
+        }
+        .header-btn {
+            background: none; border: none; color: var(--ios-blue);
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            text-decoration: none; font-weight: 500;
+        }
+        .header-btn svg { width: 12px; height: 20px; margin-right: 5px; stroke: currentColor; stroke-width: 2.5; }
+        .title { font-size: 22px; font-weight: 700; margin: 0; }
+
+        .theme-toggle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--ios-input-bg); border: none; color: var(--text-primary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .theme-toggle:hover { opacity: 0.8; }
+
+        /* --- INPUT FORM --- */
+        .input-section {
+            background: var(--ios-glass-bg);
+            border: 1px solid var(--ios-glass-border);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: 1 / -1; }
+
+        label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+        input, textarea, select {
+            width: 100%; box-sizing: border-box; background: var(--ios-input-bg);
+            border: 1px solid transparent; border-radius: 8px; padding: 12px;
+            font-size: 15px; color: var(--text-primary); font-family: inherit;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; background: var(--ios-glass-bg); border-color: var(--ios-blue); }
+
+        .btn-primary {
+            background: var(--ios-blue); color: white; border: none;
+            border-radius: 10px; padding: 14px; font-size: 16px; font-weight: 600;
+            width: 100%; cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-primary:active { opacity: 0.8; }
+
+        /* --- SLIDE PREVIEW (FIXED LAYOUT) --- */
+        .slide-preview-wrapper { margin-bottom: 20px; }
+
+        .slide-content {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            background: var(--slide-bg, #fff);
+            color: var(--slide-text, #000);
+            font-family: var(--slide-font, sans-serif);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden; /* CRITICAL: Prevents content from falling out */
+            position: relative;
+            padding: 2.5rem;
+            box-sizing: border-box;
+            border: 1px solid var(--ios-glass-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- LAYOUTS (Redesigned for fit) --- */
+        
+        /* 1. Standard Layout: Title Top, Content split 60/40 */
+        .layout-standard {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 1rem;
+        }
+        .layout-standard h2 {
+            flex-shrink: 0; /* Title never shrinks */
+            font-size: 2.2rem; margin: 0; line-height: 1.1; color: var(--slide-accent);
+        }
+        .layout-standard .content-wrapper {
+            display: flex;
+            flex: 1; /* Takes remaining space */
+            gap: 2rem;
+            overflow: hidden; /* Contains children */
+            min-height: 0; /* Flexbox scrolling fix */
+        }
+        .layout-standard .text-col {
+            flex: 1.5;
+            display: flex; flex-direction: column;
+            justify-content: flex-start;
+            font-size: 1.2rem; 
+            overflow-y: hidden; /* Hide excess text if absolutely necessary */
+        }
+        .layout-standard .img-col {
+            flex: 1;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.03);
+            display: flex; align-items: center; justify-content: center;
+            height: auto;
+            max-height: 100%;
+        }
+        .layout-standard img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 2. Full Text Layout */
+        .layout-full { 
+            display: flex; flex-direction: column; height: 100%; gap: 1rem; 
+        }
+        .layout-full h2 { font-size: 2.4rem; margin: 0; color: var(--slide-accent); flex-shrink: 0; }
+        .layout-full .text-content { 
+            font-size: 1.3rem; 
+            line-height: 1.6; 
+            flex-grow: 1; 
+            column-count: 2; 
+            column-gap: 2.5rem; 
+            overflow: hidden;
+        }
+
+        /* 3. Quote Layout */
+        .layout-quote {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; height: 100%; padding: 0 4rem;
+        }
+        .layout-quote h2 {
+            font-size: 2.2rem !important; font-style: italic; font-weight: 300;
+            line-height: 1.3; color: var(--slide-accent); margin-bottom: 2rem;
+        }
+        .layout-quote .author { font-size: 1.4rem; font-weight: 600; opacity: 0.8; }
+
+        /* 4. Big Number */
+        .layout-big-number {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; height: 100%;
+        }
+        .layout-big-number h2 { font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; margin-bottom: 0.5rem; }
+        .layout-big-number .big-stat { font-size: 6rem; font-weight: 800; color: var(--slide-accent); line-height: 1; margin: 0.5rem 0; }
+        .layout-big-number .stat-desc { font-size: 1.2rem; max-width: 80%; line-height: 1.4; }
+
+        /* Typography Defaults - Optimized for fitting */
+        ul { padding-left: 1.2em; margin: 0; }
+        li { margin-bottom: 0.6em; } /* Tighter spacing */
+        p { margin-bottom: 0.8em; }
+
+        /* Themes */
+        .slide-theme-modern { --slide-bg: #fff; --slide-text: #1d1d1f; --slide-accent: #007aff; --slide-font: 'Helvetica Neue', sans-serif; }
+        .slide-theme-corporate { --slide-bg: #f4f6f8; --slide-text: #2c3e50; --slide-accent: #34495e; --slide-font: 'Georgia', serif; }
+        .slide-theme-dark { --slide-bg: #121212; --slide-text: #e0e0e0; --slide-accent: #f1c40f; --slide-font: 'Arial', sans-serif; }
+        .slide-theme-vibrant { --slide-bg: #fff; --slide-text: #000; --slide-accent: #ff2d55; --slide-font: 'Verdana', sans-serif; }
+
+        /* --- CONTROLS --- */
+        .controls-bar {
+            background: var(--ios-glass-bg);
+            border: 1px solid var(--ios-glass-border);
+            border-radius: 12px; padding: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary {
+            background: var(--ios-input-bg); color: var(--ios-blue);
+            border: 1px solid transparent; border-radius: 8px;
+            padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        .btn-secondary:hover { background: rgba(0,122,255,0.1); }
+
+        /* Loading */
+        .loading-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); z-index: 999;
+            align-items: center; justify-content: center; flex-direction: column; color: white;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(30,30,30,0.9); color: #fff; padding: 12px 24px;
+            border-radius: 30px; font-weight: 500; opacity: 0; transition: 0.3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; bottom: 50px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <a href="home.html" class="header-btn">
+                <svg viewBox="0 0 13 21" fill="none"><path d="M11.5 1.5L2 10.5L11.5 19.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Home
+            </a>
+            <h1 class="title">AI Slide Generator Pro</h1>
+            <button id="themeToggle" class="theme-toggle" title="Switch Theme">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+        </header>
+
+        <form id="slide-form" class="input-section">
+            <div class="form-grid">
+                <div class="full-width">
+                    <label>Presentation Topic</label>
+                    <input type="text" id="topic" placeholder="e.g. Implementation of Quantum Key Distribution" required>
+                </div>
+                
+                <div class="full-width">
+                    <label>Context / Objective</label>
+                    <textarea id="objective" rows="2" placeholder="e.g. Explain technical feasibility to the engineering board."></textarea>
+                </div>
+
+                <div class="full-width">
+                    <label>Proficiency / Depth</label>
+                    <select id="proficiency">
+                        <option value="general">General Audience (Simple)</option>
+                        <option value="professional">Professional / Business (Standard)</option>
+                        <option value="expert">Technical Expert (Condensed & Deep)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Slide Count</label>
+                    <input type="number" id="slideCount" value="6" min="3" max="20">
+                </div>
+                
+                <div>
+                    <label>Visual Style</label>
+                    <select id="slideStyle">
+                        <option value="modern">Modern Blue (Clean)</option>
+                        <option value="corporate">Corporate Slate (Formal)</option>
+                        <option value="dark">Elegant Dark (Bold)</option>
+                        <option value="vibrant">Vibrant Creative</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>AI Model</label>
+                    <select id="aiModel">
+                        <option value="auto">Auto (Best Available)</option>
+                        <option value="gemini-3.0-flash">Gemini 3.0 Flash</option>
+                        <option value="gemini-3-flash-preview">Gemini 3.0 Flash Preview</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking</option>
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Imagery</label>
+                    <select id="imageOption">
+                        <option value="ai">AI Generated</option>
+                        <option value="blank">Blank Placeholders</option>
+                        <option value="none">Text Only</option>
+                    </select>
+                </div>
+
+                <div class="full-width">
+                    <label>API Key</label>
+                    <input type="password" id="apiKey" value="AIzaSyB2VABamiAQE-wVyjDmLrdkNZVnSbrqDUk">
+                </div>
+
+                <div class="full-width">
+                    <button type="submit" class="btn-primary" id="generateBtn">Generate Presentation</button>
+                </div>
+            </div>
+        </form>
+
+        <div id="outputArea" style="display:none;">
+            <div class="slide-preview-wrapper">
+                <div id="slideContent" class="slide-content slide-theme-modern">
+                    </div>
+            </div>
+
+            <div class="controls-bar">
+                <div>
+                    <button id="prevBtn" class="btn-secondary">Previous</button>
+                    <span id="pageIndicator" style="margin:0 15px; font-variant-numeric: tabular-nums;">1 / 1</span>
+                    <button id="nextBtn" class="btn-secondary">Next</button>
+                </div>
+                
+                <div style="gap:10px; display:flex;">
+                    <button id="exportPdfBtn" class="btn-secondary">Export PDF</button>
+                    <button id="exportPptxBtn" class="btn-secondary">Export PPTX</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loadingText" style="font-size:18px; font-weight:600;">Analyzing Content...</div>
+        <div id="modelStatus" style="font-size:14px; opacity:0.8; margin-top:10px;"></div>
+    </div>
+    <div id="toast" class="toast">Message</div>
+
+    <script>
+        // --- SECURITY CHECK ---
+        (function checkSecurity() {
+            const session = sessionStorage.getItem('cm_v7_session');
+            if (!session) window.location.href = 'login.html';
+        })();
+
+        // --- CONFIG & DATA ---
+        const DEFAULT_KEY = "AIzaSyB2VABamiAQE-wVyjDmLrdkNZVnSbrqDUk";
+        
+        // AUTO SWITCH HIERARCHY (NEWEST TO OLDEST)
+        const MODEL_HIERARCHY = [
+            'gemini-3.0-flash',
+            'gemini-3-flash-preview',
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash-thinking-exp-01-21',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-pro',
+            'gemini-1.5-flash',
+            'gemini-1.5-flash-8b'
+        ];
+        
+        let slides = [];
+        let currentSlideIndex = 0;
+        let pptxLoaded = false;
+
+        // --- UI REFS ---
+        const els = {
+            form: document.getElementById('slide-form'),
+            topic: document.getElementById('topic'),
+            objective: document.getElementById('objective'),
+            proficiency: document.getElementById('proficiency'),
+            count: document.getElementById('slideCount'),
+            style: document.getElementById('slideStyle'),
+            model: document.getElementById('aiModel'),
+            imgOpt: document.getElementById('imageOption'),
+            apiKey: document.getElementById('apiKey'),
+            output: document.getElementById('outputArea'),
+            slideContainer: document.getElementById('slideContent'),
+            prev: document.getElementById('prevBtn'),
+            next: document.getElementById('nextBtn'),
+            indicator: document.getElementById('pageIndicator'),
+            loader: document.getElementById('loadingOverlay'),
+            loadText: document.getElementById('loadingText'),
+            modelStatus: document.getElementById('modelStatus'),
+            toast: document.getElementById('toast'),
+            themeToggle: document.getElementById('themeToggle')
+        };
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme');
+            const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && dark)) document.documentElement.setAttribute('data-theme', 'dark');
+
+            if (typeof PptxGenJS === 'undefined') {
+                const s = document.createElement('script');
+                s.src = "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.min.js";
+                s.onload = () => pptxLoaded = true;
+                document.head.appendChild(s);
+            } else pptxLoaded = true;
+        });
+
+        els.themeToggle.addEventListener('click', () => {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+
+        // --- MAIN GENERATION LOGIC ---
+        els.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const topic = els.topic.value.trim();
+            if (!topic) return showToast("Please enter a topic");
+
+            setLoading(true, "Researching Topic...");
+            
+            const count = els.count.value;
+            const context = els.objective.value;
+            const prof = els.proficiency.value;
+            
+            // STRICT PROMPT TO PREVENT OVERFLOW
+            let profInstruction = "";
+            if (prof === 'expert') {
+                profInstruction = "Use technical language but be CONCISE. Do not write novels. Max 4 bullet points.";
+            } else if (prof === 'professional') {
+                profInstruction = "Business language, max 4 bullet points per slide.";
+            } else {
+                profInstruction = "Simple language, max 3 bullet points per slide.";
+            }
+
+            const prompt = `Act as a senior presentation consultant.
+            Topic: ${topic}
+            Context: ${context}
+            Constraint: ${profInstruction}
+            Slides: ${count}
+            
+            Return ONLY valid JSON:
+            { "slides": [ { "title": "...", "layout": "standard|quote|big-number|full", "content": ["point 1", "point 2"], "imagePrompt": "..." } ] }
+            
+            CRITICAL RULES:
+            1. Keep content strictly inside the slide.
+            2. 'standard' layout: Max 40 words total in content.
+            3. 'full' layout: Max 80 words total.
+            `;
+
+            const models = els.model.value === 'auto' ? MODEL_HIERARCHY : [els.model.value];
+            let result = null;
+            let finalModel = "";
+
+            for (const m of models) {
+                els.modelStatus.innerText = `Attempting with ${m}...`;
+                try {
+                    result = await callGemini(prompt, m);
+                    if (result && result.slides) {
+                        finalModel = m;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(m, "failed", err);
+                }
+            }
+
+            if (!result) {
+                setLoading(false);
+                return showToast("Failed to generate. Check API Key/Connection.");
+            }
+
+            slides = result.slides;
+            currentSlideIndex = 0;
+            applyTheme();
+
+            if (els.imgOpt.value === 'ai') {
+                els.loadText.innerText = "Generating Visuals (Universal Engine)...";
+                await generateImages(slides);
+            }
+
+            renderSlide();
+            els.output.style.display = 'block';
+            els.output.scrollIntoView({ behavior: 'smooth' });
+            setLoading(false);
+            showToast(`Generated using ${finalModel}`);
+        });
+
+        async function callGemini(prompt, model) {
+            const key = els.apiKey.value || DEFAULT_KEY;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+            const body = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error(res.status);
+            const data = await res.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
+        }
+
+        async function generateImages(slidesArr) {
+            for (let i = 0; i < slidesArr.length; i++) {
+                const s = slidesArr[i];
+                if (s.layout === 'standard' && s.imagePrompt) {
+                    els.modelStatus.innerText = `Designing Slide ${i+1}...`;
+                    try {
+                        const cleanPrompt = encodeURIComponent(s.imagePrompt + ", minimal vector, clean");
+                        const seed = Math.floor(Math.random() * 1000);
+                        const imageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=800&height=600&nologo=true&seed=${seed}`;
+                        const resp = await fetch(imageUrl);
+                        const blob = await resp.blob();
+                        await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => { s.imgData = reader.result; resolve(); };
+                            reader.readAsDataURL(blob);
+                        });
+                    } catch(e) { console.log("Image fail", e); }
+                }
+            }
+        }
+
+        function applyTheme() {
+            els.slideContainer.className = `slide-content slide-theme-${els.style.value}`;
+        }
+
+        function renderSlide() {
+            if (!slides.length) return;
+            const s = slides[currentSlideIndex];
+            
+            els.slideContainer.innerHTML = '';
+            
+            const wrap = document.createElement('div');
+            wrap.className = `layout-${s.layout || 'standard'}`;
+            
+            let html = '';
+            
+            if (s.layout === 'quote') {
+                html = `<h2 contenteditable="true">"${s.content[0]}"</h2><div class="author" contenteditable="true">— ${s.content[1] || 'Source'}</div>`;
+            } 
+            else if (s.layout === 'big-number') {
+                html = `<h2 contenteditable="true">${s.title}</h2><div class="big-stat" contenteditable="true">${s.content[0]}</div><div class="stat-desc" contenteditable="true">${s.content[1]}</div>`;
+            } 
+            else if (s.layout === 'standard') {
+                html += `<h2 contenteditable="true">${s.title}</h2><div class="content-wrapper"><div class="text-col">`;
+                if(Array.isArray(s.content)) s.content.forEach(p => html += `<p contenteditable="true">• ${p}</p>`);
+                html += `</div>`;
+                
+                if (els.imgOpt.value !== 'none') {
+                    if (s.imgData) html += `<div class="img-col"><img src="${s.imgData}"></div>`;
+                    else html += `<div class="img-col" style="color:#aaa;">Visual</div>`;
+                }
+                html += `</div>`;
+            } 
+            else {
+                wrap.className = 'layout-full';
+                html = `<h2 contenteditable="true">${s.title}</h2><div class="text-content">`;
+                if(Array.isArray(s.content)) s.content.forEach(p => html += `<p contenteditable="true">${p}</p>`);
+                html += `</div>`;
+            }
+
+            wrap.innerHTML = html;
+            els.slideContainer.appendChild(wrap);
+
+            els.indicator.innerText = `${currentSlideIndex + 1} / ${slides.length}`;
+            els.prev.disabled = currentSlideIndex === 0;
+            els.next.disabled = currentSlideIndex === slides.length - 1;
+        }
+
+        els.prev.onclick = () => { if(currentSlideIndex>0) { currentSlideIndex--; renderSlide(); } };
+        els.next.onclick = () => { if(currentSlideIndex<slides.length-1) { currentSlideIndex++; renderSlide(); } };
+
+        document.getElementById('exportPdfBtn').onclick = async () => {
+            setLoading(true, "Exporting PDF...");
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720] });
+            const oldShadow = els.slideContainer.style.boxShadow;
+            els.slideContainer.style.boxShadow = 'none';
+
+            for (let i = 0; i < slides.length; i++) {
+                currentSlideIndex = i; renderSlide();
+                await new Promise(r => setTimeout(r, 200)); 
+                const cvs = await html2canvas(els.slideContainer, { scale: 2, useCORS: true });
+                if (i > 0) pdf.addPage([1280, 720], 'landscape');
+                pdf.addImage(cvs.toDataURL('image/png'), 'PNG', 0, 0, 1280, 720);
+            }
+            els.slideContainer.style.boxShadow = oldShadow;
+            pdf.save('Presentation.pdf');
+            setLoading(false);
+        };
+
+        document.getElementById('exportPptxBtn').onclick = () => {
+            if(!pptxLoaded) return showToast("PPTX Engine Loading...");
+            const pptx = new PptxGenJS();
+            pptx.layout = 'LAYOUT_16X9';
+            
+            const colors = {
+                modern: { bg: 'FFFFFF', color: '1D1D1F', accent: '007AFF' },
+                corporate: { bg: 'F4F6F8', color: '2C3E50', accent: '34495E' },
+                dark: { bg: '121212', color: 'E0E0E0', accent: 'F1C40F' },
+                vibrant: { bg: 'FFFFFF', color: '000000', accent: 'FF2D55' }
+            };
+            const th = colors[els.style.value] || colors.modern;
+
+            slides.forEach(s => {
+                const slide = pptx.addSlide();
+                slide.background = { color: th.bg };
+                slide.color = th.color;
+
+                if (s.layout === 'quote') {
+                    slide.addText(`"${s.content[0]}"`, { x:1, y:2, w:'80%', fontSize:32, color:th.accent, italic:true, align:'center' });
+                    slide.addText(s.content[1]||'', { x:1, y:4.5, w:'80%', fontSize:18, color:th.color, align:'center' });
+                }
+                else if (s.layout === 'big-number') {
+                    slide.addText(s.title, { x:0.5, y:0.5, w:'90%', fontSize:18, color:th.color, align:'center' });
+                    slide.addText(s.content[0], { x:1, y:2, w:'80%', fontSize:80, color:th.accent, bold:true, align:'center' });
+                    slide.addText(s.content[1], { x:2, y:4.5, w:'60%', fontSize:16, color:th.color, align:'center' });
+                }
+                else {
+                    slide.addText(s.title, { x:0.5, y:0.5, w:'90%', fontSize:32, color:th.accent, bold:true });
+                    const hasImg = s.layout === 'standard' && s.imgData;
+                    
+                    slide.addText(s.content.map(c=>c).join('\n'), {
+                        x:0.5, y:1.5, w: hasImg?'50%':'90%', h:'70%',
+                        fontSize:16, color:th.color, bullet:true, lineSpacing:24, valign:'top'
+                    });
+                    
+                    if (hasImg) slide.addImage({ data:s.imgData, x:6, y:1.5, w:3.5, h:3.5 });
+                }
+            });
+            pptx.writeFile({ fileName: 'Presentation.pptx' });
+        };
+
+        function setLoading(active, text) {
+            els.loader.style.display = active ? 'flex' : 'none';
+            els.loadText.innerText = text;
+            if(!active) els.modelStatus.innerText = "";
+        }
+        function showToast(msg) {
+            els.toast.innerText = msg;
+            els.toast.classList.add('show');
+            setTimeout(() => els.toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Analysis System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <script src="data-storage.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* COLOR SCHEME - Light theme (default) */
+        :root {
+            --bg-color: #f0fbff;
+            --card-color: rgba(255, 255, 255, 0.95);
+            --text-color: #000000; /* UPDATED: Black text as requested */
+            --accent-color: #007aff;
+            --danger-color: #ff3b30;
+            --normal-color: #38c172;
+            --muted-color: rgba(0, 0, 0, 0.6); /* UPDATED: Muted black */
+            --border-radius: 16px;
+            --spacing: 16px;
+
+            /* NEW: Expanded variables for full theme control */
+            --border-color-light: rgba(0, 0, 0, 0.1);
+            --border-color-strong: rgba(0, 0, 0, 0.15);
+            --card-border: 1px solid rgba(255, 255, 255, 0.8);
+            --card-shadow: 0 18px 50px rgba(6, 24, 50, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-focus-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+            --btn-primary-bg: linear-gradient(180deg, rgba(110,200,255,0.96), rgba(150,230,255,0.96));
+            --btn-primary-color: #03303a;
+            --btn-primary-shadow: 0 8px 20px rgba(95,184,255,0.2);
+            --btn-primary-hover-shadow: 0 12px 25px rgba(95,184,255,0.3);
+            --btn-secondary-bg: rgba(0, 0, 0, 0.05);
+            --btn-secondary-hover-bg: rgba(0, 0, 0, 0.08);
+            --btn-active-bg: var(--btn-primary-bg);
+            --btn-active-color: var(--btn-primary-color);
+            --btn-active-border: rgba(110,200,255,0.3);
+            --table-header-bg: rgba(0, 122, 255, 0.1);
+            --chart-grid-color: rgba(4, 32, 52, 0.1);
+            --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+            --point-border-color: #f0fbff; /* Matches --bg-color */
+            --back-btn-bg: rgba(255, 255, 255, 0.9);
+            --back-btn-border: 1px solid rgba(255, 255, 255, 0.6);
+            --back-btn-shadow: 0 8px 20px rgba(6,24,50,0.1);
+            --func-back-btn-bg: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,252,255,0.9));
+            --func-back-btn-border: 1px solid rgba(255,255,255,0.64);
+            --func-back-btn-shadow: 0 18px 40px rgba(6,24,50,0.12);
+            --message-box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
+        }
+
+        /* NEW: Dark Mode Theme */
+        html[data-theme="dark"] {
+            --bg-color: #121212;
+            --card-color: rgba(29, 29, 31, 0.95);
+            --text-color: #ffffff;
+            --accent-color: #0a84ff;
+            --danger-color: #ff453a;
+            --normal-color: #32d74b;
+            --muted-color: rgba(255, 255, 255, 0.6);
+            
+            --border-color-light: rgba(255, 255, 255, 0.15);
+            --border-color-strong: rgba(255, 255, 255, 0.2);
+            --card-border: 1px solid rgba(255, 255, 255, 0.1);
+            --card-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+            --input-bg: rgba(58, 58, 60, 0.9);
+            --input-focus-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3);
+            --btn-primary-bg: linear-gradient(180deg, rgba(10, 132, 255, 0.96), rgba(30, 152, 255, 0.96));
+            --btn-primary-color: #ffffff;
+            --btn-primary-shadow: 0 8px 20px rgba(10, 132, 255, 0.2);
+            --btn-primary-hover-shadow: 0 12px 25px rgba(10, 132, 255, 0.3);
+            --btn-secondary-bg: rgba(255, 255, 255, 0.1);
+            --btn-secondary-hover-bg: rgba(255, 255, 255, 0.15);
+            --btn-active-bg: var(--btn-primary-bg);
+            --btn-active-color: var(--btn-primary-color);
+            --btn-active-border: rgba(10, 132, 255, 0.3);
+            --table-header-bg: rgba(10, 132, 255, 0.2);
+            --chart-grid-color: rgba(255, 255, 255, 0.15);
+            --chart-tooltip-bg: rgba(29, 29, 31, 0.95);
+            --point-border-color: #121212; /* Matches --bg-color */
+            --back-btn-bg: rgba(29, 29, 31, 0.9);
+            --back-btn-border: 1px solid rgba(255, 255, 255, 0.1);
+            --back-btn-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            --func-back-btn-bg: linear-gradient(180deg, rgba(58, 58, 60, 0.96), rgba(40, 40, 42, 0.9));
+            --func-back-btn-border: 1px solid rgba(255, 255, 255, 0.1);
+            --func-back-btn-shadow: 0 18px 40px rgba(0,0,0,0.2);
+            --message-box-shadow: 0 8px 25px rgba(10, 132, 255, 0.3);
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        }
+        
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: var(--spacing); 
+            transition: background-color 0.3s ease, color 0.3s ease; /* NEW: Smooth transition */
+        }
+        
+        .card { 
+            background: var(--card-color); 
+            border-radius: var(--border-radius);
+            padding: var(--spacing); 
+            margin-bottom: var(--spacing);
+            width: 100%; 
+            max-width: 1400px;
+            backdrop-filter: blur(20px);
+            border: var(--card-border); /* UPDATED */
+            box-shadow: var(--card-shadow); /* UPDATED */
+            transition: background-color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease; /* NEW */
+        }
+
+        h1, h2 { 
+            color: var(--text-color); 
+            margin-bottom: var(--spacing); 
+        }
+        
+        h1 { 
+            text-align: center; 
+            font-size: 1.5rem; 
+        }
+        
+        .analysis-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; 
+            margin-top: 10px;
+        }
+
+        .analysis-item {
+            padding: 12px; 
+            background-color: var(--input-bg); /* UPDATED */
+            border-radius: 10px; 
+            border-left: 3px solid var(--accent-color); /* UPDATED */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* This shadow is subtle, looks ok on dark */
+            transition: background-color 0.3s ease, border-color 0.3s ease; /* NEW */
+        }
+
+        .analysis-item span { 
+            display: block; 
+            font-size: 0.8rem; 
+            color: var(--muted-color); /* UPDATED */
+        }
+        .analysis-item strong { 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            color: var(--text-color); /* UPDATED */
+        }
+
+        .chart-container {
+            position: relative; 
+            height: 50vh;
+            width: 100%; 
+            margin-bottom: var(--spacing);
+            background-color: var(--input-bg); /* UPDATED */
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            border: 1px solid var(--border-color-light); /* UPDATED */
+            transition: background-color 0.3s ease, border-color 0.3s ease; /* NEW */
+        }
+
+        .data-input-section { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+        }
+
+        .data-point {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 40px; 
+            gap: 8px; 
+            align-items: center;
+        }
+
+        input[type="text"], input[type="number"], .analysis-selector select { /* ADDED select */
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color-light); /* UPDATED */
+            background-color: var(--input-bg); /* UPDATED */
+            color: var(--text-color); /* UPDATED */
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; /* NEW */
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, .analysis-selector select:focus { /* ADDED select */
+            border-color: var(--accent-color); /* UPDATED */
+            box-shadow: var(--input-focus-shadow); /* UPDATED */
+        }
+
+        button {
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer;
+            font-weight: 600; 
+            transition: all 0.2s ease;
+            color: white;
+            font-size: 14px;
+        }
+
+        .primary-btn { 
+            background: var(--btn-primary-bg); /* UPDATED */
+            color: var(--btn-primary-color); /* UPDATED */
+            box-shadow: var(--btn-primary-shadow); /* UPDATED */
+        }
+        .primary-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: var(--btn-primary-hover-shadow); /* UPDATED */
+        }
+        
+        .danger-btn { 
+            background-color: var(--danger-color); /* UPDATED */
+            padding: 8px; 
+            color: white;
+        }
+        .danger-btn:hover { 
+            /* These can be simple brightness filters, but hardcoded is fine */
+            transform: scale(1.05);
+        }
+        html[data-theme="light"] .danger-btn:hover {
+            background-color: #cc2925;
+        }
+        html[data-theme="dark"] .danger-btn:hover {
+            background-color: #ff6057;
+        }
+
+
+        .secondary-btn { 
+            background-color: var(--btn-secondary-bg); /* UPDATED */
+            color: var(--text-color); /* UPDATED */
+            border: 1px solid var(--border-color-light); /* UPDATED */
+        }
+        .secondary-btn:hover { 
+            background-color: var(--btn-secondary-hover-bg); /* UPDATED */
+            transform: translateY(-1px);
+        }
+        
+        .btn-group { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: var(--spacing); 
+        }
+
+        .toggle-btn { 
+            flex-grow: 1; 
+            background-color: var(--btn-secondary-bg); /* UPDATED */
+            color: var(--text-color); /* UPDATED */
+            border: 1px solid var(--border-color-light); /* UPDATED */
+        }
+        .toggle-btn.active { 
+            background: var(--btn-active-bg); /* UPDATED */
+            color: var(--btn-active-color); /* UPDATED */
+            border-color: var(--btn-active-border); /* UPDATED */
+        }
+        
+        .options-group {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: var(--spacing); 
+            gap: var(--spacing); 
+            flex-wrap: wrap; 
+        }
+
+        /* NEW: Style for the theme toggle button */
+        .theme-toggle-btn {
+            width: 44px;
+            height: 44px; /* Matches input padding + border */
+            padding: 0;
+            font-size: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn {
+            position: absolute; 
+            top: var(--spacing); 
+            left: var(--spacing);
+            background-color: var(--back-btn-bg); /* UPDATED */
+            color: var(--text-color); /* UPDATED */
+            z-index: 10;
+            border: var(--back-btn-border); /* UPDATED */
+            box-shadow: var(--back-btn-shadow); /* UPDATED */
+        }
+
+        /* Parallel buttons layout */
+        .parallel-buttons {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: var(--spacing);
+        }
+
+        /* Multi-column table styles */
+        .data-table-container {
+            display: none;
+            margin-top: var(--spacing);
+            max-height: 400px;
+            overflow: auto;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color-strong); /* UPDATED */
+            background-color: var(--input-bg); /* UPDATED */
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color-light); /* UPDATED */
+            min-width: 120px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg); /* UPDATED */
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            color: var(--text-color); /* NEW: Ensure header text is themed */
+        }
+
+        .data-table input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            outline: none;
+            padding: 5px;
+            color: var(--text-color); /* NEW: Ensure input text is themed */
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .remove-column-btn {
+            background: none;
+            border: none;
+            color: var(--danger-color); /* UPDATED */
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: var(--spacing);
+        }
+
+        .analysis-selector {
+            margin-bottom: var(--spacing);
+        }
+
+        /* .analysis-selector select is handled by the main input rule */
+
+        @media (min-width: 1200px) {
+            .analysis-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+            
+            .parallel-buttons {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 12px;
+            }
+            
+            .chart-container {
+                height: 55vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analysis-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .parallel-buttons { grid-template-columns: 1fr; }
+            .options-group { flex-direction: column; align-items: stretch; }
+            .data-table-container { font-size: 12px; }
+            
+            /* NEW: Fix for theme toggle on small screen */
+            #file-name {
+                min-width: 100px; /* Allow it to grow */
+            }
+            .options-group > input[type="text"] {
+                flex-grow: 1;
+            }
+            .options-group > button {
+                flex-shrink: 0;
+            }
+            /* Keep first options group in a row */
+            .card > .options-group:first-of-type {
+                flex-direction: row;
+                flex-wrap: nowrap;
+            }
+        }
+        
+        /* Loading indicator */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 122, 255, 0.3); /* Base color */
+            border-radius: 50%;
+            border-top-color: var(--accent-color); /* UPDATED */
+            animation: spin 1s ease-in-out infinite;
+        }
+        /* NEW: Dark mode loading */
+        html[data-theme="dark"] .loading {
+             border: 3px solid rgba(10, 132, 255, 0.3);
+             border-top-color: var(--accent-color);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-color); /* UPDATED */
+        }
+        
+        /* Message Box */
+        #message-box {
+            /* ... (styles are fine, just update shadow) ... */
+            box-shadow: var(--message-box-shadow); /* UPDATED */
+        }
+    </style>
+</head>
+<body>
+<script src="script.js"></script>
+<style>
+/* Return button fixed top-left, glossy, pop animation */
+.func-back-btn{
+    position:fixed;
+    left:18px;
+    top:18px;
+    z-index:1600;
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: var(--func-back-btn-bg); /* UPDATED */
+    border: var(--func-back-btn-border); /* UPDATED */
+    box-shadow: var(--func-back-btn-shadow); /* UPDATED */
+    cursor:pointer;
+    backdrop-filter:blur(8px);
+    transform-origin:center;
+    animation:popIn .6s cubic-bezier(.25,1,.5,1);
+    color: var(--text-color); /* UPDATED */
+    font-size: 24px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease, color 0.3s ease; /* NEW */
+} 
+
+@keyframes popIn{
+    0%{opacity:0;transform:scale(.84) translateY(8px)}
+    60%{transform:scale(1.06) translateY(-6px)}
+    100%{opacity:1;transform:scale(1) translateY(0)}
+}
+</style>
+
+<button class="func-back-btn" onclick="location.href='search.html'" title="Back to Search">‹</button>
+
+<script>
+// Protect page: redirect to login if no session
+(function(){
+  try{
+    if(typeof requireSession === 'function'){
+      if(!requireSession()) location.replace('login.html');
+    } else {
+      if(!sessionStorage.getItem('cm_v7_session') && !sessionStorage.getItem('cm_session_v6') && !sessionStorage.getItem('cm_v7_session')){
+        location.replace('login.html');
+      }
+    }
+  }catch(e){
+    try{ if(!sessionStorage.getItem('cm_v7_session')) location.replace('login.html'); }catch(_){ location.replace('login.html'); }
+  }
+})();
+</script>
+
+    <div class="card">
+        <h1>Data Chart Analysis</h1>
+        
+        <div class="options-group">
+            <input type="text" id="file-name" placeholder="File Name" style="flex-grow: 1;">
+            <button id="manual-save-btn" class="primary-btn">
+                <span id="save-text">Save</span>
+                <span id="save-loading" class="loading" style="display: none;"></span>
+            </button>
+            <button id="theme-toggle-btn" class="secondary-btn theme-toggle-btn" title="Toggle Theme">
+                <span id="theme-icon"☀️</span>
+            </button>
+        </div>
+        
+        <div class="card" style="margin-top: 0; margin-bottom: var(--spacing);">
+            <h2>Data Analysis Summary</h2>
+            <div class="analysis-selector">
+                <select id="analysis-column-selector">
+                    <option value="all">All Columns</option>
+                </select>
+            </div>
+            <div class="analysis-grid" id="analysis-container">
+                <div class="analysis-item"><span>Data Points</span><strong id="metric-count">0</strong></div>
+                <div class="analysis-item"><span>Mean</span><strong id="metric-mean">0.0000</strong></div>
+                <div class="analysis-item"><span>Median</span><strong id="metric-median">0.0000</strong></div>
+                <div class="analysis-item"><span>Mode</span><strong id="metric-mode">0.0000</strong></div>
+                <div class="analysis-item"><span>Max</span><strong id="metric-max">0.0000</strong></div>
+                <div class="analysis-item"><span>Min</span><strong id="metric-min">0.0000</strong></div>
+                <div class="analysis-item"><span>Range</span><strong id="metric-range">0.0000</strong></div>
+                <div class="analysis-item"><span>Std Deviation</span><strong id="metric-std">0.0000</strong></div>
+                <div class="analysis-item"><span>Variance</span><strong id="metric-variance">0.0000</strong></div>
+                <div class="analysis-item"><span>Q1 (25%)</span><strong id="metric-q1">0.0000</strong></div>
+                <div class="analysis-item"><span>Q3 (75%)</span><strong id="metric-q3">0.0000</strong></div>
+                <div class="analysis-item"><span>IQR</span><strong id="metric-iqr">0.0000</strong></div>
+                <div class="analysis-item"><span>Skewness</span><strong id="metric-skewness">0.0000</strong></div>
+                <div class="analysis-item"><span>Kurtosis</span><strong id="metric-kurtosis">0.0000</strong></div>
+                <div class="analysis-item"><span>Sum</span><strong id="metric-sum">0.0000</strong></div>
+                <div class="analysis-item"><span>RMS</span><strong id="metric-rms">0.0000</strong></div>
+            </div>
+        </div>
+
+        <div class="parallel-buttons">
+            <div class="btn-group">
+                <button id="line-btn" class="toggle-btn active">Line Graph</button>
+                <button id="curve-btn" class="toggle-btn">Curve Graph</button>
+            </div>
+            <div class="btn-group">
+                <button id="linear-scale-btn" class="toggle-btn active">Linear Scale</button>
+                <button id="log-scale-btn" class="toggle-btn">Logarithmic Scale</button>
+            </div>
+            <div class="btn-group">
+                <button id="show-points-btn" class="toggle-btn active">Show Points</button>
+                <button id="hide-points-btn" class="toggle-btn">Hide Points</button>
+            </div>
+        </div>
+
+        <div class="options-group">
+            <input type="text" id="x-axis-name" placeholder="X-Axis Name" style="flex-grow: 1;">
+            <input type="text" id="y-axis-name" placeholder="Y-Axis Name" style="flex-grow: 1;">
+        </div>
+
+        <div class="chart-container">
+            <canvas id="dataChart"></canvas>
+        </div>
+
+        <div class="options-group" style="justify-content: flex-start;">
+            <label for="show-values">
+                <input type="checkbox" id="show-values">
+                Show Values on Chart
+            </label>
+        </div>
+        
+        <div class="options-group" style="margin-top: -10px;">
+            <button id="reset-zoom-btn" class="secondary-btn" style="flex-grow: 1;">Reset Zoom</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Data Points</h2>
+        
+        <div class="options-group">
+            <button id="toggle-table-view" class="secondary-btn" style="flex-grow: 1;">Show Table View</button>
+            <button id="add-column-btn" class="primary-btn">Add Column</button>
+        </div>
+        
+        <div class="data-table-container" id="data-table-container">
+            <table class="data-table" id="data-table">
+                <thead>
+                    <tr id="table-headers">
+                        <th>X</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="data-input-section" id="data-points-container">
+            </div>
+        
+        <button id="add-data-point-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing);">
+            Add Data Point
+        </button>
+        
+        <div class="btn-group" style="margin-top: var(--spacing);">
+            <button id="import-btn" class="secondary-btn">Import Data (CSV)</button> 
+            <button id="export-btn" class="secondary-btn">Export Data (CSV)</button>
+            <button id="export-graph-btn" class="secondary-btn">Export Chart (PNG)</button>
+        </div>
+        <input type="file" id="file-input" accept=".csv" style="display: none;">
+    </div>
+
+    <div id="message-box" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent-color); color: white; padding: 12px 24px; border-radius: 10px; z-index: 1000; font-weight: 600;"></div>
+
+    <script>
+        // Chart and data variables (UNCHANGED)
+        let chartInstance = null;
+        let dataFile = {
+            id: null,
+            name: 'New Chart',
+            dataPoints: [{ x: 'Point 1', y: ['1.2'] }],
+            yColumns: ['Y1'],
+            graphType: 'line',
+            scaleType: 'linear',
+            xAxisName: 'X-Axis',
+            yAxisName: 'Y-Axis',
+            showValues: false,
+            showPoints: true
+        };
+        
+        // --- NEW THEME FUNCTIONS ---
+
+        /**
+         * Applies the saved theme from localStorage on page load
+         */
+        function applyInitialTheme() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                const htmlEl = document.documentElement;
+                htmlEl.dataset.theme = savedTheme;
+                
+                const icon = document.getElementById('theme-icon');
+                if (icon) {
+                    if (savedTheme === 'dark') {
+                        icon.textContent = '🌙';
+                    } else {
+                        icon.textContent = '☀️';
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to apply initial theme:", e);
+            }
+        }
+        
+        /**
+         * Toggles the theme between light and dark
+         */
+        function toggleTheme() {
+            try {
+                const htmlEl = document.documentElement;
+                const icon = document.getElementById('theme-icon');
+                
+                if (htmlEl.dataset.theme === 'dark') {
+                    htmlEl.dataset.theme = 'light';
+                    localStorage.setItem('theme', 'light');
+                    if(icon) icon.textContent = '☀️';
+                } else {
+                    htmlEl.dataset.theme = 'dark';
+                    localStorage.setItem('theme', 'dark');
+                    if(icon) icon.textContent = '🌙';
+                }
+                
+                // Re-render the chart to apply new theme colors
+                renderChart();
+            } catch (e) {
+                console.error("Failed to toggle theme:", e);
+            }
+        }
+
+        // --- END NEW THEME FUNCTIONS ---
+
+
+        /**
+         * Show message to user (UNCHANGED)
+         */
+        function showMessage(message, type = 'info', duration = 3000) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.style.background = type === 'error' ? 'var(--danger-color)' : 'var(--accent-color)'; // Use variable
+            box.style.display = 'block';
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, duration);
+        }
+
+        /**
+         * Initialize the file
+         * --- *** FIXED: Use loadFileData from data-storage.js *** ---
+         */
+        function initializeFile() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileId = urlParams.get('id');
+
+            if (fileId) {
+                // *** FIXED: Call loadFileData (the correct function) ***
+                const loadedData = loadFileData(fileId);
+                if (loadedData) {
+                    // Handle legacy data format (single y value)
+                    if (loadedData.dataPoints && loadedData.dataPoints.length > 0 && 
+                        !Array.isArray(loadedData.dataPoints[0].y)) {
+                        // Convert to multi-column format
+                        loadedData.dataPoints = loadedData.dataPoints.map(point => ({
+                            x: point.x,
+                            y: [point.y]
+                        }));
+                        loadedData.yColumns = ['Y1'];
+                    }
+                    
+                    dataFile = {
+                        ...dataFile,
+                        ...loadedData,
+                        id: fileId
+                    };
+                } else {
+                    // File ID in URL, but no data found (it's a new file)
+                    dataFile.id = fileId;
+                }
+            } else {
+                // Create new file
+                dataFile.id = 'chart_' + crypto.randomUUID();
+                // Update URL to include the new file ID without reloading
+                const newUrl = `${window.location.pathname}?id=${dataFile.id}`;
+                window.history.replaceState({}, '', newUrl);
+            }
+
+            // Update UI with loaded data
+            document.getElementById('file-name').value = dataFile.name;
+            document.getElementById('x-axis-name').value = dataFile.xAxisName;
+            document.getElementById('y-axis-name').value = dataFile.yAxisName;
+            document.getElementById('show-values').checked = dataFile.showValues;
+            
+            // Set button states
+            document.getElementById('line-btn').classList.toggle('active', dataFile.graphType === 'line');
+            document.getElementById('curve-btn').classList.toggle('active', dataFile.graphType === 'curve');
+            document.getElementById('linear-scale-btn').classList.toggle('active', dataFile.scaleType === 'linear');
+            document.getElementById('log-scale-btn').classList.toggle('active', dataFile.scaleType === 'logarithmic');
+            document.getElementById('show-points-btn').classList.toggle('active', dataFile.showPoints === true);
+            document.getElementById('hide-points-btn').classList.toggle('active', dataFile.showPoints === false);
+
+            // Update column selector
+            updateColumnSelector();
+
+            // Initial render
+            renderDataPoints();
+            renderTable();
+            renderChart();
+        }
+
+        /**
+         * Update column selector dropdown (UNCHANGED)
+         */
+        function updateColumnSelector() {
+            const selector = document.getElementById('analysis-column-selector');
+            selector.innerHTML = '<option value="all">All Columns</option>';
+            
+            dataFile.yColumns.forEach((column, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = column;
+                selector.appendChild(option);
+            });
+        }
+
+        /**
+         * Render the chart with current data
+         * --- MODIFIED to be theme-aware ---
+         */
+        function renderChart() {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Prepare data (UNCHANGED)
+            const labels = dataFile.dataPoints.map(point => point.x);
+            
+            // --- NEW: Get computed styles for theme ---
+            const styles = getComputedStyle(document.documentElement);
+            const textColor = styles.getPropertyValue('--text-color').trim();
+            const mutedColor = styles.getPropertyValue('--muted-color').trim();
+            const gridColor = styles.getPropertyValue('--chart-grid-color').trim();
+            const tooltipBg = styles.getPropertyValue('--chart-tooltip-bg').trim();
+            const accentColor = styles.getPropertyValue('--accent-color').trim();
+            const datalabelBg = styles.getPropertyValue('--card-color').trim();
+            const pointBorderColor = styles.getPropertyValue('--point-border-color').trim();
+            
+            // Create datasets for each column (Point border color is now themed)
+            const datasets = dataFile.yColumns.map((columnName, columnIndex) => {
+                const data = dataFile.dataPoints.map(point => {
+                    const num = parseFloat(point.y[columnIndex] || 0);
+                    return isNaN(num) ? 0 : num;
+                });
+                
+                const colors = [
+                    '#007aff', '#ff3b30', '#38c172', '#ffcc00', 
+                    '#5856d6', '#ff2d55', '#8e8e93', '#007aff',
+                    '#5ac8fa', '#ff9500', '#4cd964', '#ff3b30',
+                    '#8e8e93', '#ffcc00', '#007aff', '#5856d6'
+                ];
+                
+                // Use accentColor for the first line in light mode, keep others
+                const accent = (document.documentElement.dataset.theme || 'light') === 'light' 
+                    ? accentColor 
+                    : colors[0];
+                
+                const effectiveColors = [
+                    accent, ...colors.slice(1)
+                ];
+
+                const color = effectiveColors[columnIndex % effectiveColors.length];
+                
+                return {
+                    label: columnName,
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: dataFile.graphType === 'curve' ? 
+                        color.replace(')', ', 0.1)').replace('rgb', 'rgba') : 
+                        'transparent',
+                    borderWidth: 3,
+                    pointRadius: dataFile.showPoints ? 4 : 0,
+                    pointBackgroundColor: color,
+                    pointBorderColor: pointBorderColor, // UPDATED
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: pointBorderColor, // UPDATED
+                    pointHoverBorderColor: color,
+                    pointHoverRadius: 6,
+                    fill: dataFile.graphType === 'curve',
+                    tension: dataFile.graphType === 'curve' ? 0.4 : 0,
+                    spanGaps: true
+                };
+            });
+            
+            // Calculate statistics (UNCHANGED)
+            updateEnhancedStatistics();
+
+            // Chart configuration with THEMED COLORS
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: dataFile.xAxisName,
+                                color: textColor, // UPDATED
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                }
+                            },
+                            ticks: {
+                                color: mutedColor, // UPDATED
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: gridColor // UPDATED
+                            }
+                        },
+                        y: {
+                            type: dataFile.scaleType,
+                            title: {
+                                display: true,
+                                text: dataFile.yAxisName,
+                                color: textColor, // UPDATED
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                }
+                            },
+                            ticks: {
+                                color: mutedColor, // UPDATED
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: gridColor // UPDATED
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: textColor, // UPDATED
+                                boxWidth: 12,
+                                padding: 15,
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: dataFile.showValues,
+                            color: textColor, // UPDATED
+                            backgroundColor: datalabelBg, // UPDATED
+                            borderRadius: 4,
+                            padding: 4,
+                            align: 'top',
+                            font: {
+                                weight: '600',
+                                size: 11
+                            },
+                            formatter: function(value) {
+                                return value.toFixed(2);
+                            }
+                        },
+                        zoom: { // (UNCHANGED)
+                            pan: {
+                                enabled: true,
+                                mode: 'xy'
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy'
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: tooltipBg, // UPDATED
+                            titleColor: textColor, // UPDATED
+                            bodyColor: textColor, // UPDATED
+                            borderColor: accentColor, // UPDATED
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            boxPadding: 8,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            };
+
+            // Create the chart (UNCHANGED)
+            try {
+                chartInstance = new Chart(ctx, config);
+            } catch (error) {
+                console.error('Error rendering chart:', error);
+                showMessage('Error rendering chart: ' + error.message, 'error', 3000);
+            }
+        }
+
+        /**
+         * Enhanced statistics calculation with more metrics (UNCHANGED)
+         */
+        function updateEnhancedStatistics() {
+            const selectedColumn = document.getElementById('analysis-column-selector').value;
+            
+            if (selectedColumn === 'all') {
+                const allData = [];
+                dataFile.dataPoints.forEach(point => {
+                    point.y.forEach((value, index) => {
+                        const num = parseFloat(value);
+                        if (!isNaN(num)) {
+                            allData.push(num);
+                        }
+                    });
+                });
+                calculateAndDisplayStatistics(allData);
+            } else {
+                const columnIndex = parseInt(selectedColumn);
+                const columnData = dataFile.dataPoints.map(point => {
+                    const num = parseFloat(point.y[columnIndex] || 0);
+                    return isNaN(num) ? 0 : num;
+                });
+                calculateAndDisplayStatistics(columnData);
+            }
+        }
+
+        /**
+         * Calculate and display statistics for given data array (UNCHANGED)
+         */
+        function calculateAndDisplayStatistics(data) {
+            const count = data.length;
+            if (count === 0) {
+                resetStatistics();
+                return;
+            }
+
+            const sum = data.reduce((a, b) => a + b, 0);
+            const mean = sum / count;
+            const max = Math.max(...data);
+            const min = Math.min(...data);
+            const range = max - min;
+            
+            const sorted = data.slice().sort((a, b) => a - b);
+            const median = calculateMedian(sorted);
+            const mode = calculateMode(data);
+            const q1 = calculateQuartile(sorted, 0.25);
+            const q3 = calculateQuartile(sorted, 0.75);
+            const iqr = q3 - q1;
+            
+            const variance = calculateVariance(data, mean);
+            const std = Math.sqrt(variance);
+            
+            const skewness = calculateSkewness(data, mean, std);
+            const kurtosis = calculateKurtosis(data, mean, std);
+            
+            const rms = Math.sqrt(data.reduce((a, b) => a + b * b, 0) / count);
+            
+            document.getElementById('metric-count').textContent = count.toLocaleString();
+            document.getElementById('metric-mean').textContent = mean.toFixed(4);
+            document.getElementById('metric-median').textContent = median.toFixed(4);
+            document.getElementById('metric-mode').textContent = mode.toFixed(4);
+            document.getElementById('metric-max').textContent = max.toFixed(4);
+            document.getElementById('metric-min').textContent = min.toFixed(4);
+            document.getElementById('metric-range').textContent = range.toFixed(4);
+            document.getElementById('metric-std').textContent = std.toFixed(4);
+            document.getElementById('metric-variance').textContent = variance.toFixed(4);
+            document.getElementById('metric-q1').textContent = q1.toFixed(4);
+            document.getElementById('metric-q3').textContent = q3.toFixed(4);
+            document.getElementById('metric-iqr').textContent = iqr.toFixed(4);
+            document.getElementById('metric-skewness').textContent = skewness.toFixed(4);
+            document.getElementById('metric-kurtosis').textContent = kurtosis.toFixed(4);
+            document.getElementById('metric-sum').textContent = sum.toLocaleString();
+            document.getElementById('metric-rms').textContent = rms.toFixed(4);
+        }
+
+        /**
+         * Reset all statistics to zero (UNCHANGED)
+         */
+        function resetStatistics() {
+            const metrics = [
+                'count', 'mean', 'median', 'mode', 'max', 'min', 'range',
+                'std', 'variance', 'q1', 'q3', 'iqr', 'skewness', 'kurtosis', 'sum', 'rms'
+            ];
+            
+            metrics.forEach(metric => {
+                document.getElementById(`metric-${metric}`).textContent = '0.0000';
+            });
+        }
+
+        // --- All helper functions (calculateMedian, calculateMode, etc.) are UNCHANGED ---
+        function calculateMedian(sortedData) {
+            const mid = Math.floor(sortedData.length / 2);
+            return sortedData.length % 2 === 0 
+                ? (sortedData[mid - 1] + sortedData[mid]) / 2 
+                : sortedData[mid];
+        }
+        function calculateMode(data) {
+            const frequency = {};
+            let maxFreq = 0;
+            let mode = data[0];
+            data.forEach(value => {
+                frequency[value] = (frequency[value] || 0) + 1;
+                if (frequency[value] > maxFreq) {
+                    maxFreq = frequency[value];
+                    mode = value;
+                }
+            });
+            return mode;
+        }
+        function calculateQuartile(sortedData, quartile) {
+            const pos = (sortedData.length - 1) * quartile;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (sortedData[base + 1] !== undefined) {
+                return sortedData[base] + rest * (sortedData[base + 1] - sortedData[base]);
+            } else {
+                return sortedData[base];
+            }
+        }
+        function calculateVariance(data, mean) {
+            return data.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / data.length;
+        }
+        function calculateSkewness(data, mean, std) {
+            if (std === 0) return 0;
+            const n = data.length;
+            const skew = data.reduce((sum, value) => sum + Math.pow((value - mean) / std, 3), 0) / n;
+            return skew;
+        }
+        function calculateKurtosis(data, mean, std) {
+            if (std === 0) return 0;
+            const n = data.length;
+            const kurt = data.reduce((sum, value) => sum + Math.pow((value - mean) / std, 4), 0) / n - 3;
+            return kurt;
+        }
+
+        /**
+         * Add a new data point (UNCHANGED)
+         */
+        function addDataPoint() {
+            const newYValues = new Array(dataFile.yColumns.length).fill('');
+            dataFile.dataPoints.push({ 
+                x: `Point ${dataFile.dataPoints.length + 1}`, 
+                y: newYValues 
+            });
+            renderDataPoints();
+            renderTable();
+            renderChart();
+        }
+
+        /**
+         * Add a new column (UNCHANGED)
+         */
+        function addColumn() {
+            const newColumnName = `Y${dataFile.yColumns.length + 1}`;
+            dataFile.yColumns.push(newColumnName);
+            
+            dataFile.dataPoints.forEach(point => {
+                point.y.push('');
+            });
+            
+            updateColumnSelector();
+            renderDataPoints();
+            renderTable();
+            renderChart();
+            
+            showMessage(`New column "${newColumnName}" added successfully!`, 'info', 2000);
+        }
+
+        /**
+         * Remove a column (UNCHANGED)
+         */
+        function removeColumn(columnIndex) {
+            if (dataFile.yColumns.length <= 1) {
+                showMessage('Cannot remove the last column', 'error', 3000);
+                return;
+            }
+            
+            const columnName = dataFile.yColumns[columnIndex];
+            dataFile.yColumns.splice(columnIndex, 1);
+            dataFile.dataPoints.forEach(point => {
+                point.y.splice(columnIndex, 1);
+            });
+            
+            updateColumnSelector();
+            renderDataPoints();
+            renderTable();
+            renderChart();
+            
+            showMessage(`Column "${columnName}" removed successfully!`, 'info', 2000);
+        }
+
+        /**
+         * Render data points in the UI (UNCHANGED)
+         */
+        function renderDataPoints() {
+            const container = document.getElementById('data-points-container');
+            container.innerHTML = '';
+            
+            dataFile.dataPoints.forEach((point, index) => {
+                const pointDiv = document.createElement('div');
+                pointDiv.className = 'data-point';
+                
+                let inputsHTML = `
+                    <input type="text" value="${point.x}" data-field="x" data-index="${index}" placeholder="X Value">
+                `;
+                
+                point.y.forEach((yValue, colIndex) => {
+                    inputsHTML += `
+                        <input type="text" value="${yValue}" data-field="y" data-index="${index}" data-colindex="${colIndex}" placeholder="${dataFile.yColumns[colIndex]}">
+                    `;
+                });
+                
+                inputsHTML += `
+                    <button class="danger-btn" data-index="${index}" title="Delete point">-</button>
+                `;
+                
+                pointDiv.innerHTML = inputsHTML;
+                container.appendChild(pointDiv);
+            });
+
+            container.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const field = e.target.dataset.field;
+                    
+                    if (field === 'x') {
+                        dataFile.dataPoints[index][field] = e.target.value;
+                    } else {
+                        const colIndex = parseInt(e.target.dataset.colindex);
+                        dataFile.dataPoints[index].y[colIndex] = e.target.value;
+                    }
+                    
+                    renderTable();
+                    renderChart();
+                });
+            });
+
+            container.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    dataFile.dataPoints.splice(index, 1);
+                    renderDataPoints();
+                    renderTable();
+                    renderChart();
+                });
+            });
+        }
+
+        /**
+         * Render table view (UNCHANGED)
+         */
+        function renderTable() {
+            const tableContainer = document.getElementById('data-table-container');
+            const tableHeaders = document.getElementById('table-headers');
+            const tableBody = document.getElementById('table-body');
+            
+            tableHeaders.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            let headersHTML = '<th>X</th>';
+            dataFile.yColumns.forEach((column, index) => {
+                headersHTML += `
+                    <th>
+                        <div class="column-header">
+                            <input type="text" value="${column}" data-colindex="${index}" class="column-name-input">
+                            <button class="remove-column-btn" data-colindex="${index}" title="Remove column">×</button>
+                        </div>
+                    </th>
+                `;
+            });
+            headersHTML += '<th>Action</th>';
+            tableHeaders.innerHTML = headersHTML;
+            
+            dataFile.dataPoints.forEach((point, rowIndex) => {
+                const row = document.createElement('tr');
+                
+                let rowHTML = `
+                    <td><input type="text" value="${point.x}" data-field="x" data-index="${rowIndex}"></td>
+                `;
+                
+                point.y.forEach((yValue, colIndex) => {
+                    rowHTML += `
+                        <td><input type="text" value="${yValue}" data-field="y" data-index="${rowIndex}" data-colindex="${colIndex}"></td>
+                    `;
+                });
+                
+                rowHTML += `
+                    <td><button class="danger-btn" data-index="${rowIndex}" title="Delete row">-</button></td>
+                `;
+                
+                row.innerHTML = rowHTML;
+                tableBody.appendChild(row);
+            });
+            
+            tableHeaders.querySelectorAll('.column-name-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const colIndex = parseInt(e.target.dataset.colindex);
+                    dataFile.yColumns[colIndex] = e.target.value;
+                    renderDataPoints();
+                    renderChart();
+                });
+            });
+            
+            tableHeaders.querySelectorAll('.remove-column-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const colIndex = parseInt(e.target.dataset.colindex);
+                    removeColumn(colIndex);
+                });
+            });
+            
+            tableBody.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const field = e.target.dataset.field;
+                    
+                    if (field === 'x') {
+                        dataFile.dataPoints[index][field] = e.target.value;
+                    } else {
+                        const colIndex = parseInt(e.target.dataset.colindex);
+                        dataFile.dataPoints[index].y[colIndex] = e.target.value;
+                    }
+                    
+                    renderDataPoints();
+                    renderChart();
+                });
+            });
+            
+            tableBody.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    dataFile.dataPoints.splice(index, 1);
+                    renderDataPoints();
+                    renderTable();
+                    renderChart();
+                });
+            });
+        }
+
+        /**
+         * Toggle table view visibility (UNCHANGED)
+         */
+        function toggleTableView() {
+            const tableContainer = document.getElementById('data-table-container');
+            const toggleBtn = document.getElementById('toggle-table-view');
+            
+            if (tableContainer.style.display === 'block') {
+                tableContainer.style.display = 'none';
+                toggleBtn.textContent = 'Show Table View';
+            } else {
+                tableContainer.style.display = 'block';
+                toggleBtn.textContent = 'Hide Table View';
+            }
+        }
+
+        /**
+         * Enhanced CSV Import - Supports various table formats (UNCHANGED)
+         */
+        function importCSV(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    const lines = content.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 1) {
+                        showMessage('CSV file is empty', 'error', 3000);
+                        return;
+                    }
+                    
+                    const firstLine = lines[0];
+                    let delimiter = ',';
+                    if (firstLine.includes(';') && !firstLine.includes(',')) delimiter = ';';
+                    else if (firstLine.includes('\t') && !firstLine.includes(',') && !firstLine.includes(';')) delimiter = '\t';
+                    
+                    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
+                    
+                    if (headers.length < 2) {
+                        showMessage('CSV must have at least two columns (X and at least one Y)', 'error', 3000);
+                        return;
+                    }
+                    
+                    let hasHeader = true;
+                    const firstDataRow = lines[1] || lines[0];
+                    const firstDataValues = firstDataRow.split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
+                    
+                    if (!isNaN(parseFloat(firstDataValues[0])) && isFinite(firstDataValues[0])) {
+                        hasHeader = false;
+                    }
+                    
+                    const actualHeaders = hasHeader ? headers : headers.map((_, i) => i === 0 ? 'X' : `Y${i}`);
+                    dataFile.yColumns = actualHeaders.slice(1);
+                    dataFile.dataPoints = [];
+                    
+                    const startLine = hasHeader ? 1 : 0;
+                    
+                    for (let i = startLine; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line) {
+                            const values = line.split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
+                            if (values.length >= 2) {
+                                const x = values[0];
+                                let yValues = values.slice(1);
+                                
+                                while (yValues.length < dataFile.yColumns.length) {
+                                    yValues.push('');
+                                }
+                                if (yValues.length > dataFile.yColumns.length) {
+                                    const additionalColumns = yValues.slice(dataFile.yColumns.length);
+                                    additionalColumns.forEach((_, idx) => {
+                                        dataFile.yColumns.push(`Y${dataFile.yColumns.length + 1}`);
+                                    });
+                                }
+                                
+                                if (x) {
+                                    dataFile.dataPoints.push({ x, y: yValues });
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (dataFile.dataPoints.length > 0) {
+                        updateColumnSelector();
+                        renderDataPoints();
+                        renderTable();
+                        renderChart();
+                        showMessage(`Imported ${dataFile.dataPoints.length} data points with ${dataFile.yColumns.length} columns successfully!`, 'info', 3000);
+                    } else {
+                        showMessage('No valid data found in CSV file', 'error', 3000);
+                    }
+                } catch (error) {
+                    console.error('Error parsing CSV:', error);
+                    showMessage('Error parsing CSV file: ' + error.message, 'error', 3000);
+                }
+            };
+            reader.onerror = function() {
+                console.error('Error reading file');
+                showMessage('Error reading file', 'error', 3000);
+            };
+            reader.readAsText(file);
+        }
+
+        /**
+         * Enhanced CSV Export - Supports various table formats (UNCHANGED)
+         */
+        function exportCSV() {
+            try {
+                if (!dataFile.dataPoints || dataFile.dataPoints.length === 0) {
+                    showMessage('No data to export', 'error', 3000);
+                    return false;
+                }
+                
+                let csvContent = `X,${dataFile.yColumns.join(',')}\n`;
+                
+                dataFile.dataPoints.forEach(point => {
+                    const xEscaped = `"${point.x.replace(/"/g, '""')}"`;
+                    const yEscaped = point.y.map(y => `"${(y || '').replace(/"/g, '""')}"`).join(',');
+                    csvContent += `${xEscaped},${yEscaped}\n`;
+                });
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${dataFile.name || 'data_backup'}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                showMessage('Data exported as CSV successfully!', 'info', 2000);
+                return true;
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showMessage('Error exporting data: ' + error.message, 'error', 3000);
+                return false;
+            }
+        }
+
+        /**
+         * Export chart as PNG (UNCHANGED)
+         */
+        function exportChartPNG() {
+            if (chartInstance) {
+                try {
+                    const url = chartInstance.toBase64Image();
+                    const link = document.createElement('a');
+                    link.download = `${dataFile.name || 'chart'}.png`;
+                    link.href = url;
+                    link.click();
+                    showMessage('Chart exported as PNG successfully!', 'info', 2000);
+                } catch (error) {
+                    console.error('Export chart error:', error);
+                    showMessage('Error exporting chart: ' + error.message, 'error', 3000);
+                }
+            } else {
+                showMessage('No chart to export', 'error', 3000);
+            }
+        }
+
+        /**
+         * Reset zoom on chart (UNCHANGED)
+         */
+        function resetZoom() {
+            if (chartInstance) {
+                chartInstance.resetZoom();
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // --- *** THIS FUNCTION IS NOW FIXED *** ---
+        // -----------------------------------------------------------------
+
+        /**
+         * Save file (FIXED to use saveFileData from data-storage.js)
+         */
+        async function saveFile() {
+            const saveBtn = document.getElementById('manual-save-btn');
+            const saveText = document.getElementById('save-text');
+            const saveLoading = document.getElementById('save-loading');
+
+            // Show loading state
+            saveText.style.display = 'none';
+            saveLoading.style.display = 'inline-block';
+            saveBtn.disabled = true;
+            
+            try {
+                // Check if storage function is available (from data-storage.js)
+                if (typeof saveFileData !== 'function') {
+                    console.error("data-storage.js is missing or saveFileData not found.");
+                    showMessage('Error: Storage function (saveFileData) is missing.', 'error');
+                    return; // Stop execution
+                }
+
+                // Get all data from UI and update dataFile object
+                dataFile.name = document.getElementById('file-name').value || 'Unnamed Chart';
+                dataFile.xAxisName = document.getElementById('x-axis-name').value;
+                dataFile.yAxisName = document.getElementById('y-axis-name').value;
+                dataFile.showValues = document.getElementById('show-values').checked;
+                // Add/update timestamp for sorting
+                dataFile.lastModified = new Date().getTime();
+
+                // *** FIXED: Call the correct save function ***
+                const result = saveFileData(dataFile.id, dataFile, dataFile.name);
+                
+                if (result.success) {
+                    showMessage('File saved successfully!', 'info', 2000);
+                } else {
+                    showMessage(`Save failed: ${result.error}`, 'error');
+                }
+
+            } catch (err) {
+                console.error("Error saving file:", err);
+                showMessage(`Save failed: ${err.message}`, 'error');
+            } finally {
+                // Hide loading state
+                saveText.style.display = 'inline-block';
+                saveLoading.style.display = 'none';
+                saveBtn.disabled = false;
+            }
+        }
+
+        /**
+         * Initialize event listeners
+         * --- (No change here, this was correct) ---
+         */
+        function initializeEventListeners() {
+            document.getElementById('manual-save-btn').addEventListener('click', saveFile);
+            document.getElementById('add-data-point-btn').addEventListener('click', addDataPoint);
+            document.getElementById('add-column-btn').addEventListener('click', addColumn);
+            document.getElementById('toggle-table-view').addEventListener('click', toggleTableView);
+            document.getElementById('reset-zoom-btn').addEventListener('click', resetZoom);
+            
+            // Export/Import buttons (UNCHANGED)
+            document.getElementById('export-btn').addEventListener('click', exportCSV);
+            document.getElementById('export-graph-btn').addEventListener('click', exportChartPNG);
+            document.getElementById('import-btn').addEventListener('click', () => {
+                document.getElementById('file-input').click();
+            });
+            
+            // File input for CSV import (UNCHANGED)
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importCSV(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+            
+            // Chart type buttons (UNCHANGED)
+            document.getElementById('line-btn').addEventListener('click', () => {
+                dataFile.graphType = 'line';
+                document.getElementById('line-btn').classList.add('active');
+                document.getElementById('curve-btn').classList.remove('active');
+                renderChart();
+            });
+            
+            document.getElementById('curve-btn').addEventListener('click', () => {
+                dataFile.graphType = 'curve';
+                document.getElementById('curve-btn').classList.add('active');
+                document.getElementById('line-btn').classList.remove('active');
+                renderChart();
+            });
+
+            // Scale type buttons (UNCHANGED)
+            document.getElementById('linear-scale-btn').addEventListener('click', () => {
+                dataFile.scaleType = 'linear';
+                document.getElementById('linear-scale-btn').classList.add('active');
+                document.getElementById('log-scale-btn').classList.remove('active');
+                renderChart();
+            });
+            
+            document.getElementById('log-scale-btn').addEventListener('click', () => {
+                dataFile.scaleType = 'logarithmic';
+                document.getElementById('log-scale-btn').classList.add('active');
+                document.getElementById('linear-scale-btn').classList.remove('active');
+                renderChart();
+            });
+
+            // Show/hide points buttons (UNCHANGED)
+            document.getElementById('show-points-btn').addEventListener('click', () => {
+                dataFile.showPoints = true;
+                document.getElementById('show-points-btn').classList.add('active');
+                document.getElementById('hide-points-btn').classList.remove('active');
+                renderChart();
+            });
+            
+            document.getElementById('hide-points-btn').addEventListener('click', () => {
+                dataFile.showPoints = false;
+                document.getElementById('hide-points-btn').classList.add('active');
+                document.getElementById('show-points-btn').classList.remove('active');
+                renderChart();
+            });
+
+            // Show values checkbox (UNCHANGED)
+            document.getElementById('show-values').addEventListener('change', (e) => {
+                dataFile.showValues = e.target.checked;
+                renderChart();
+            });
+
+            // Column selector for analysis (UNCHANGED)
+            document.getElementById('analysis-column-selector').addEventListener('change', () => {
+                updateEnhancedStatistics();
+            });
+
+            // --- NEW: Add listener for theme toggle button ---
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+        }
+
+        /**
+         * Initialize the application
+         * --- (No change here, this was correct) ---
+         */
+        function initializeApp() {
+            applyInitialTheme(); // --- ADDED THIS LINE ---
+            initializeFile();
+            initializeEventListeners();
+        }
+
+        // Start the application when page loads (UNCHANGED)
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en"> <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover"/>
+    <title>Cable Management System</title>
+    <style>
+        /* * =========================================
+         * FIX 1: REFACTORED LIGHT/DARK MODE CSS
+         * =========================================
+         * - All light mode styles are now the default in :root.
+         * - A single .dark-mode class on the <html> tag will override variables.
+         * - This is much cleaner and supports the new manual toggle.
+        */
+        :root {
+            --ios-blue: #007aff;
+            
+            /* Light Mode Defaults */
+            --text-color: #000;
+            --subtitle-color: #8a8a8e;
+            
+            /* --- MODIFIED --- */
+            --bg-color: #fff; /* Changed from #f0f2f5 */
+            --bg-gradient: linear-gradient(180deg, #fff 0%, #fff 100%); /* Changed from gradient */
+            /* --- END OF MODIFICATION --- */
+            
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --input-placeholder: #8a8a8e;
+            
+            --ghost-bg: rgba(0, 0, 0, 0.05);
+            --ghost-color: #000;
+            --ghost-border: rgba(0, 0, 0, 0.1);
+            --ghost-hover-bg: rgba(0, 0, 0, 0.1);
+            
+            --back-btn-bg: rgba(0,0,0,0.05);
+            --back-btn-color: #333;
+            --back-btn-hover-bg: rgba(0,0,0,0.1);
+        }
+        
+        /* Dark mode overrides */
+        .dark-mode:root {
+            --text-color: #fff;
+            --subtitle-color: #8e8e93;
+            --bg-color: #000;
+            --bg-gradient: linear-gradient(180deg, #1a1a1a 0%, #000 100%);
+            
+            --glass-bg: rgba(28, 28, 30, 0.5); /* Darker glass */
+            --glass-border: rgba(255, 255, 255, 0.15);
+            
+            --input-bg: rgba(58, 58, 60, 0.5);
+            --input-placeholder: #ccc;
+            
+            --ghost-bg: rgba(255, 255, 255, 0.2);
+            --ghost-color: #fff;
+            --ghost-border: rgba(255, 255, 255, 0.3);
+            --ghost-hover-bg: rgba(255, 255, 255, 0.3);
+            
+            --back-btn-bg: rgba(100,100,100,0.3);
+            --back-btn-color: #fff;
+            --back-btn-hover-bg: rgba(100,100,100,0.5);
+        }
+        
+        /* --- 1. Base & Fonts --- */
+        html {
+            height: 100%;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: var(--bg-gradient);
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- 2. Page Layout & Animations --- */
+        .app-wrap {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .page-container {
+            padding-top: 20px;
+            padding-bottom: 60px;
+        }
+
+        @keyframes page-enter-animation {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page-enter {
+            animation: page-enter-animation 0.4s ease-out;
+        }
+
+        /* --- 3. Header & Back Button --- */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            font-size: 26px; /* Was 24px */
+            font-weight: 400; /* Was 200 */
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: var(--back-btn-bg);
+            color: var(--back-btn-color);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            
+            /* --- START OF FIX --- */
+            /* Added to perfectly center the glyph */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            /* Nudge to visually center the chevron */
+            padding-bottom: 2px; 
+            /* --- END OF FIX --- */
+        }
+        .back-btn:hover {
+            background: var(--back-btn-hover-bg);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        .topbar .h1 {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .topbar .h2 {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--subtitle-color);
+            margin: 0;
+        }
+        
+        /* --- 4. NEW "iOS" Settings Group Style --- */
+        .settings-group {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .settings-group .group-header {
+            padding: 16px 16px 8px 16px;
+        }
+        
+        .settings-group .h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+        
+        .settings-group .small {
+            font-size: 13px;
+            color: var(--subtitle-color);
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .settings-items-container {
+            padding: 8px 0;
+        }
+
+        .settings-item {
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .settings-item + .settings-item {
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        .settings-item > .label {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* --- 5. Inputs & Buttons (iOS Style) --- */
+        
+        .input {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text-color); /* Use main text color */
+            transition: all 0.2s ease;
+        }
+        .input::placeholder {
+            color: var(--input-placeholder);
+        }
+        .input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+        
+        .btn {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease;
+        }
+        
+        .btn:active {
+            transform: scale(0.96);
+        }
+        
+        .btn.primary {
+            background-color: var(--ios-blue);
+            color: white;
+        }
+        
+        .btn.ghost {
+            background-color: var(--ghost-bg);
+            color: var(--ghost-color);
+            border: 1px solid var(--ghost-border);
+        }
+        .btn.ghost:hover {
+             background-color: var(--ghost-hover-bg);
+        }
+        
+        /* Status text */
+        #driveStatus, #syncStatus {
+            font-size: 13px;
+            color: var(--subtitle-color);
+        }
+        
+    </style>
+    
+</head>
+<body>
+    
+    <script>
+      (function() {
+          const storedTheme = localStorage.getItem('theme');
+          if (storedTheme === 'dark') {
+              document.documentElement.classList.add('dark-mode');
+          } else if (storedTheme === 'light') {
+              document.documentElement.classList.remove('dark-mode');
+          }
+          // If no theme is stored, it defaults to light mode (no class)
+      })();
+    </script>
+
+    <script>
+        (function() {
+            if (!localStorage.getItem('cm_credentials')) {
+                const defaultCreds = {
+                    username: 'admin',
+                    password: '1234'
+                };
+                localStorage.setItem('cm_credentials', JSON.stringify(defaultCreds));
+                console.log('Default credentials initialized in localStorage.');
+            }
+        })();
+    </script>
+    
+    <button class="back-btn" onclick="goBack()">‹</button>
+    
+    <div class="app-wrap">
+        <div class="page-container page-enter" role="main">
+            
+            <div class="topbar">
+                <div>
+                    <div class="h1">Settings</div>
+                    <div class="h2">Security & Sync</div>
+                </div>
+                <div>
+                    <button class="btn ghost" onclick="location.href='home.html'">Home</button>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">Appearance</h3>
+                    <div class="small">Manually override the system theme.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <div class="button-group">
+                            <button id="toggleTheme" class="btn ghost">Toggle Theme</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">Change Password</h3>
+                    <div class="small">Update local password.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <input id="cur" class="input" type="password" placeholder="Current password">
+                        <input id="newp" class="input" type="password" placeholder="New password">
+                        <input id="conf" class="input" type="password" placeholder="Confirm new password">
+                        <button id="chg" class="btn primary" style="margin-top: 8px;">Save Password</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">Change ID</h3>
+                    <div class="small">Update local login ID. Requires current password.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <input id="id_pass" class="input" type="password" placeholder="Current password">
+                        <input id="new_id" class="input" type="text" placeholder="New ID">
+                        <button id="chg_id" class="btn primary" style="margin-top: 8px;">Save ID</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">Google Drive Sync</h3>
+                    <div class="small">Connect to Google Drive to keep data synchronized across devices.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <div class="button-group">
+                            <button id="connectDrive" class="btn primary">Connect to Google Drive</button>
+                            <button id="manualUpload" class="btn ghost">Upload</button>
+                            <button id="manualDownload" class="btn ghost">Download</button>
+                        </div>
+                        <div id="driveStatus" style="margin-top: 8px;">Not connected</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">🔄 Free LAN Sync</h3>
+                    <div class="small">Sync across browser tabs and devices without cloud services.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <div class="button-group">
+                            <button id="startSync" class="btn primary">Start LAN Sync</button>
+                            <div id="syncStatus">Ready - Auto-syncs across browser tabs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="group-header">
+                    <h3 class="h1">Manual Backup</h3>
+                    <div class="small">Export or import all boxes & logs as a JSON file.</div>
+                </div>
+                <div class="settings-items-container">
+                    <div class="settings-item">
+                        <div class="button-group">
+                            <button id="doExport" class="btn ghost">Export Backup</button>
+                            <button id="doImport" class="btn ghost">Import Backup</button>
+                            <button id="exportData" class="btn ghost">Export LAN Data</button>
+                            <button id="importData" class="btn ghost">Import LAN Data</button>
+                            <input type="file" id="importFile" accept=".json" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="p2p-sync.js"></script>
+    
+    <script>
+      // ====================================================================
+      // --- START OF FIX: Define ALL missing functions from script.js ---
+      // ====================================================================
+      
+      /**
+       * Checks if a session is active.
+       */
+      function requireSession() {
+          return sessionStorage.getItem('cm_v7_session') === 'true';
+      }
+      
+      /**
+       * Loads boxes from localStorage.
+       */
+      function loadBoxes() {
+          return JSON.parse(localStorage.getItem('cm_v7_boxes') || '[]');
+      }
+      /**
+       * Saves boxes to localStorage.
+       */
+      function saveBoxes(boxes) {
+          localStorage.setItem('cm_v7_boxes', JSON.stringify(boxes));
+      }
+      /**
+       * Loads logs from localStorage.
+       */
+      function loadLogs() {
+          return JSON.parse(localStorage.getItem('cm_v7_logs') || '[]');
+      }
+      /**
+       * Saves logs to localStorage.
+       */
+      function saveLogs(logs) {
+          localStorage.setItem('cm_v7_logs', JSON.stringify(logs));
+      }
+      
+      /**
+       * Displays a temporary "Glass" style message at the top of the screen.
+       */
+      function showMessage(message, type = 'info', duration = 3000) {
+          // Remove existing message
+          const existingMsg = document.getElementById('settingsMessage');
+          if (existingMsg) existingMsg.remove();
+          
+          // Create new message
+          const msg = document.createElement('div');
+          msg.id = 'settingsMessage';
+          msg.textContent = message;
+          
+          // New "Glass" style for notifications
+          msg.style.cssText = `
+              position: fixed;
+              top: 20px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: ${type === 'error' ? 'rgba(255, 59, 48, 0.7)' : 'rgba(0, 122, 255, 0.7)'};
+              color: white;
+              padding: 12px 20px;
+              border-radius: 12px;
+              z-index: 10000;
+              font-weight: 600;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              backdrop-filter: blur(10px) saturate(180%);
+              -webkit-backdrop-filter: blur(10px) saturate(180%);
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+              animation: message-fade-in 0.3s ease-out;
+          `;
+          
+          // Add a keyframe animation for the message
+          const styleSheet = document.createElement("style");
+          styleSheet.type = "text/css";
+          styleSheet.innerText = `
+              @keyframes message-fade-in {
+                  from { opacity: 0; transform: translate(-50%, -10px); }
+                  to { opacity: 1; transform: translate(-50%, 0); }
+              }
+          `;
+          document.head.appendChild(styleSheet);
+          
+          document.body.appendChild(msg);
+          
+          setTimeout(() => {
+              if (msg.parentNode) msg.parentNode.removeChild(msg);
+              if (document.head.contains(styleSheet)) {
+                document.head.removeChild(styleSheet); // Clean up animation
+              }
+          }, duration);
+      }
+      // ====================================================================
+      // --- END OF FIX ---
+      // ====================================================================
+
+      // Back button and session check (Now it works)
+      document.querySelector('.back-btn').style.display = (window.history.length > 1) ? 'flex' : 'none';
+      
+      // Go back button
+      function goBack() {
+          window.history.back();
+      }
+      
+      // Check session
+      if (!requireSession()) location.replace('login.html');
+      
+      // --- Password change handler (This will now work) ---
+      document.getElementById('chg').addEventListener('click', () => {
+          const curPass = document.getElementById('cur').value;
+          const newPass = document.getElementById('newp').value;
+          const confPass = document.getElementById('conf').value;
+          
+          if (!curPass || !newPass || !confPass) {
+              showMessage('Please fill in all password fields', 'error');
+              return;
+          }
+          
+          if (newPass !== confPass) {
+              showMessage('New passwords do not match', 'error');
+              return;
+          }
+
+          try {
+              let creds = JSON.parse(localStorage.getItem('cm_credentials'));
+              if (!creds) {
+                  // This should not happen because of the init script at the top
+                  showMessage('Error: Credentials not found.', 'error');
+                  return;
+              }
+
+              if (curPass === creds.password) {
+                  creds.password = newPass;
+                  localStorage.setItem('cm_credentials', JSON.stringify(creds));
+                  showMessage('Password Changed Successfully');
+                  document.getElementById('cur').value = '';
+                  document.getElementById('newp').value = '';
+                  document.getElementById('conf').value = '';
+              } else {
+                  showMessage('Incorrect current password', 'error');
+              }
+          } catch (e) {
+              showMessage('An error occurred. ' + e.message, 'error');
+          }
+      });
+      
+      // --- ID change handler (This will now work) ---
+      document.getElementById('chg_id').addEventListener('click', () => {
+          const curPass = document.getElementById('id_pass').value;
+          const newId = document.getElementById('new_id').value;
+          
+          if (!curPass || !newId) {
+              showMessage('Please fill in both fields', 'error');
+              return;
+          }
+
+          try {
+              let creds = JSON.parse(localStorage.getItem('cm_credentials'));
+              if (!creds) {
+                  // This should not happen because of the init script at the top
+                  showMessage('Error: Credentials not found.', 'error');
+                  return;
+              }
+
+              if (curPass === creds.password) {
+                  creds.username = newId;
+                  localStorage.setItem('cm_credentials', JSON.stringify(creds));
+                  showMessage('ID Changed Successfully to: ' + newId);
+                  document.getElementById('id_pass').value = '';
+                  document.getElementById('new_id').value = '';
+              } else {
+                  showMessage('Incorrect current password', 'error');
+              }
+          } catch (e) {
+              showMessage('An error occurred. ' + e.message, 'error');
+          }
+      });
+      
+      // --- Export handler (This will now work) ---
+      document.getElementById('doExport').addEventListener('click', () => {
+          const j = { boxes: loadBoxes(), logs: loadLogs() };
+          const w = window.open();
+          w.document.write('<pre>' + JSON.stringify(j, null, 2).replace(/</g, '&lt;') + '</pre>');
+      });
+      
+      // --- Import handler (This will now work) ---
+      document.getElementById('doImport').addEventListener('click', () => {
+          const txt = prompt('Paste JSON export');
+          try {
+              const j = JSON.parse(txt);
+              if (j.boxes) saveBoxes(j.boxes);
+              if (j.logs) saveLogs(j.logs);
+              showMessage('Data Imported');
+          } catch (e) {
+              showMessage('Import error', 'error');
+          }
+      });
+      
+      // --- Theme toggle script ---
+      document.getElementById('toggleTheme').addEventListener('click', () => {
+          const htmlEl = document.documentElement;
+          if (htmlEl.classList.contains('dark-mode')) {
+              htmlEl.classList.remove('dark-mode');
+              localStorage.setItem('theme', 'light');
+          } else {
+              htmlEl.classList.add('dark-mode');
+              localStorage.setItem('theme', 'dark');
+          }
+      });
+    </script>
+    
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    
+    <script>
+        // const API_KEY = 'YOUR_API_KEY'; // Still needed if you use GAPI
+        const CLIENT_ID = 'YOUR_CLIENT_ID'; // MUST BE SET
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const SYNC_FILE_NAME = 'cable-management-sync.json';
+        
+        let gapiInitialized = false;
+        let gsiInitialized = false;
+        let tokenClient;
+
+        function gapiLoaded() {
+            gapi.load('client', () => {
+                gapi.client.init({
+                    // apiKey: API_KEY, // Uncomment if you have one
+                    discoveryDocs: DISCOVERY_DOCS,
+                }).then(() => {
+                    gapiInitialized = true;
+                    console.log('GAPI client initialized');
+                }).catch(e => console.error('Error initializing GAPI client', e));
+            });
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // Handled by promise
+            });
+            gsiInitialized = true;
+            console.log('GSI client initialized');
+        }
+
+        /**
+         * Sign in the user with Google
+         */
+        async function signInDrive() {
+            return new Promise((resolve, reject) => {
+                if (!gsiInitialized) return reject(new Error("Google Sign-In not ready."));
+                if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID') return reject(new Error("CLIENT_ID is not set."));
+                
+                tokenClient.callback = (resp) => {
+                    if (resp.error) {
+                        reject(resp);
+                    } else {
+                        resolve(resp);
+                    }
+                };
+                
+                if (gapi.client.getToken() === null) {
+                    tokenClient.requestAccessToken({prompt: 'consent'});
+                } else {
+                    resolve(gapi.client.getToken());
+                }
+            });
+        }
+
+        /**
+         * Find the sync file in Google Drive
+         */
+        async function getDriveFileId() {
+            try {
+                const response = await gapi.client.drive.files.list({
+                    q: `name='${SYNC_FILE_NAME}' and trashed=false`,
+                    spaces: 'drive',
+                    fields: 'files(id, name)',
+                });
+                
+                if (response.result.files.length > 0) {
+                    return response.result.files[0].id;
+                } else {
+                    const createResponse = await gapi.client.drive.files.create({
+                        resource: {
+                            name: SYNC_FILE_NAME,
+                            mimeType: 'application/json',
+                        },
+                        fields: 'id',
+                    });
+                    return createResponse.result.id;
+                }
+            } catch (e) {
+                console.error("Error getting/creating file ID:", e);
+                throw new Error("Could not find or create sync file in Drive.");
+            }
+        }
+
+        /**
+         * Update the sync file in Google Drive
+         */
+        async function updateDriveFile(fileId, content) {
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            const metadata = { 'mimeType': 'application/json' };
+
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(content) +
+                close_delim;
+
+            return gapi.client.request({
+                path: `/upload/drive/v3/files/${fileId}`,
+                method: 'PATCH',
+                params: { uploadType: 'multipart' },
+                headers: { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                body: multipartRequestBody
+            });
+        }
+
+        /**
+         * Full upload flow
+         */
+        async function driveSyncUploadAll() {
+            if (!gapiInitialized || !gapi.client.getToken()) {
+                throw new Error("Not connected to Google Drive. Please connect first.");
+            }
+            const fileId = await getDriveFileId();
+            const data = {
+                boxes: loadBoxes(),
+                logs: loadLogs()
+            };
+            await updateDriveFile(fileId, data);
+        }
+        
+        /**
+         * Full download flow
+         */
+        async function driveSyncDownloadAll() {
+            if (!gapiInitialized || !gapi.client.getToken()) {
+                throw new Error("Not connected to Google Drive. Please connect first.");
+            }
+            const fileId = await getDriveFileId();
+            const response = await gapi.client.drive.files.get({
+                fileId: fileId,
+                alt: 'media'
+            });
+
+            const j = response.result;
+            if (j.boxes) saveBoxes(j.boxes);
+            if (j.logs) saveLogs(j.logs);
+        }
+        
+        // --- Drive button handlers ---
+        document.getElementById('connectDrive').addEventListener('click', async () => {
+            try {
+                if (!gapiInitialized || !gsiInitialized) {
+                    showMessage('Google API is still loading. Please wait...', 'error');
+                    return;
+                }
+                
+                document.getElementById('driveStatus').textContent = 'Signing in...';
+                await signInDrive();
+                document.getElementById('driveStatus').textContent = 'Connected to Drive';
+                showMessage('Connected to Google Drive');
+
+            } catch (e) {
+                console.error(e);
+                let errorMsg = e.message || (e.details ? e.details : 'Unknown error');
+                if(e.error === 'popup_closed_by_user') {
+                    errorMsg = 'Sign-in cancelled by user.';
+                }
+                document.getElementById('driveStatus').textContent = `Drive error: ${errorMsg}`;
+                showMessage(`Drive error: ${errorMsg}`, 'error');
+            }
+        });
+      
+        document.getElementById('manualUpload').addEventListener('click', async () => {
+            try {
+                document.getElementById('driveStatus').textContent = 'Uploading...';
+                await driveSyncUploadAll();
+                document.getElementById('driveStatus').textContent = 'Uploaded';
+                showMessage('Upload Successful');
+            } catch (e) {
+                console.error(e);
+                document.getElementById('driveStatus').textContent = `Upload failed: ${e.message}`;
+                showMessage(`Upload failed: ${e.message}`, 'error');
+            }
+        });
+      
+        document.getElementById('manualDownload').addEventListener('click', async () => {
+            try {
+                document.getElementById('driveStatus').textContent = 'Downloading...';
+                await driveSyncDownloadAll();
+                document.getElementById('driveStatus').textContent = 'Downloaded';
+                showMessage('Download Successful');
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('driveStatus').textContent = `Download failed: ${e.message}`;
+                showMessage(`Download failed: ${e.message}`, 'error');
+            }
+        });
+      
+        // --- LAN Sync Handlers ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if p2pSync is loaded
+            if (window.p2pSync) {
+                // Start sync button
+                document.getElementById('startSync').addEventListener('click', async function() {
+                    try {
+                        await window.p2pSync.startHost();
+                        document.getElementById('syncStatus').textContent =
+                            'LAN Sync Active - Room: ' + window.p2pSync.roomId;
+                        showMessage('LAN synchronization started!', 'info', 3000);
+                    } catch (error) {
+                        showMessage('Failed to start sync: ' + error.message, 'error', 3000);
+                    }
+                });
+                
+                // Export data
+                document.getElementById('exportData').addEventListener('click', function() {
+                    window.p2pSync.exportData();
+                    showMessage('Backup exported successfully!', 'info', 2000);
+                });
+                
+                // Import data
+                document.getElementById('importData').addEventListener('click', function() {
+                    document.getElementById('importFile').click();
+                });
+                
+                document.getElementById('importFile').addEventListener('change', async function(e) {
+                    if (e.target.files.length > 0) {
+                        try {
+                            await window.p2pSync.importData(e.target.files[0]);
+                            showMessage('Data imported successfully!', 'info', 3000);
+                            e.target.value = ''; // Reset file input
+                        } catch (error) {
+                            showMessage('Import failed: ' + error.message, 'error', 3000);
+                        }
+                    }
+                });
+                
+                // Listen for sync updates
+                window.addEventListener('syncDataUpdate', function(event) {
+                    document.getElementById('syncStatus').textContent =
+                        `Synced - ${new Date().toLocaleTimeString()}`;
+                });
+            } else {
+                // p2p-sync.js failed to load
+                document.getElementById('syncStatus').textContent = 'p2p-sync.js not found.';
+                const lanButtons = document.querySelectorAll('#startSync, #exportData, #importData');
+                lanButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = 0.5;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en"> <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>AI Test Plan Generator</title> <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;550;600;700&display=swap" rel="stylesheet">
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+   <style>
+       /* Custom Styles for iOS-inspired look */
+       body {
+           font-family: 'Inter', sans-serif;
+           background-color: #f0f2f5; /* Light gray background */
+           transition: background-color 0.3s ease;
+       }
+       .ios-card {
+           background-color: #ffffff;
+           border-radius: 1.25rem; /* 20px */
+           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+           padding: 2rem;
+           transition: background-color 0.3s ease;
+       }
+       .ios-input, .ios-select, .ios-textarea {
+           background-color: #f8f8f8;
+           border: 1px solid #e0e0e0;
+           border-radius: 0.75rem; /* 12px */
+           padding: 1rem 1.25rem; /* 16px 20px */
+           width: 100%;
+           transition: all 0.2s ease-in-out;
+           font-size: 1rem;
+           color: #111;
+       }
+       .ios-input:focus, .ios-select:focus, .ios-textarea:focus {
+           outline: none;
+           border-color: #007aff;
+           background-color: #ffffff;
+           box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+       }
+       .ios-button {
+           background-color: #007aff;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.875rem 1.5rem;
+           transition: all 0.2s ease-in-out;
+           box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+       }
+       .ios-button:hover {
+           background-color: #0056b3;
+           transform: translateY(-2px);
+           box-shadow: 0 6px 16px rgba(0, 122, 255, 0.2);
+       }
+
+       .ios-button-secondary {
+           background-color: #e5e5ea;
+           color: #007aff;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+       }
+       .ios-button-secondary:hover {
+           background-color: #dcdce0;
+       }
+
+       .ios-button-danger {
+           background-color: #ff3b30;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+       }
+       .ios-button-danger:hover {
+           background-color: #c70000;
+       }
+
+       /* Updated preview content style */
+       #preview-content {
+           background-color: #ffffff;
+           border: 1px solid #e0e0e0;
+           border-radius: 0.5rem;
+           max-width: 816px; 
+           min-height: 1056px;
+           margin-left: auto;
+           margin-right: auto;
+           overflow-y: auto;
+           color: #000; /* IMPORTANT: Keep preview content black */
+       }
+       
+       .editable-description {
+           transition: box-shadow 0.2s ease-in-out;
+           cursor: text;
+       }
+       .editable-description:focus {
+           outline: none;
+           box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4); /* Blue focus ring */
+           border-radius: 4px;
+       }
+
+       .editable-header {
+           cursor: text;
+           transition: background-color 0.2s ease-in-out;
+       }
+       .editable-header:hover {
+           background-color: #eef8ff;
+       }
+       .editable-header:focus {
+           outline: none;
+           box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4);
+       }
+
+       /* Styles for the Word Export */
+       @media print {
+           body { -webkit-print-color-adjust: exact; }
+       }
+       .word-table {
+           width: 100%;
+           border-collapse: collapse;
+           font-family: 'Times New Roman', Times, serif;
+           font-size: 11pt;
+           color: #000000; /* FIXED: Always black */
+       }
+       .word-table th, .word-table td {
+           border: 1px solid #000000;
+           padding:  0.05in;
+           text-align: left;
+           vertical-align: top;
+       }
+       .word-table th {
+           background-color: #f0f0f0;
+           font-weight: bold;
+           text-align: center;
+       }
+       
+       .word-header-table {
+           width: 100%;
+           border: none;
+           font-family: 'Times New Roman', Times, serif;
+           font-size: 11pt;
+           margin-bottom: 20px;
+           color: #000000; /* FIXED: Always black */
+       }
+       .word-footer-table {
+           width: 100%;
+           border: none;
+           font-family: 'Times New Roman', Times, serif;
+           font-size: 10pt;
+           margin-top: 30px;
+           color: #000000; /* FIXED: Always black */
+       }
+       .word-title {
+           font-size: 16pt;
+           font-weight: bold;
+           margin-bottom: 20px;
+           text-align: center;
+           color: #000000; /* FIXED: Always black */
+       }
+       .word-h2 {
+           font-size: 14pt;
+           font-weight: bold;
+           margin-top: 1.5rem;
+           margin-bottom: 0.5rem;
+           color: #000000;
+       }
+       .word-h3 {
+           font-size: 12pt;
+           font-weight: bold;
+           margin-top: 1rem;
+           margin-bottom: 0.5rem;
+           color: #000000;
+       }
+       .word-p {
+           font-size: 11pt;
+           line-height: 1.5;
+           margin-bottom: 0.5rem;
+           color: #000000;
+       }
+       .word-ul {
+           list-style-type: disc;
+           margin-left: 1.25in;
+           margin-bottom: 0.5rem;
+           font-size: 11pt;
+           color: #000000;
+       }
+
+       .return-button {
+           background-color: #6c757d;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem;
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+           box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
+           border: none;
+           cursor: pointer;
+           margin-right: 10px;
+       }
+       .return-button:hover {
+           background-color: #5a6268;
+           transform: translateY(-2px);
+           box-shadow: 0 6px 16px rgba(108, 117, 125, 0.2);
+       }
+
+       /* --- NEW: Dark Mode Styles --- */
+       .dark body {
+           background-color: #000000;
+       }
+       .dark h1, .dark h2, .dark h3,
+       .dark .text-gray-900, .dark .text-gray-800, 
+       .dark .text-gray-600, .dark .text-gray-500,
+       .dark label, .dark #logo-status {
+           color: #f0f0f5;
+       }
+       .dark .ios-card {
+           background-color: #1c1c1e;
+       }
+       .dark .ios-input, .dark .ios-select, .dark .ios-textarea {
+           background-color: #2c2c2e;
+           border-color: #3a3a3c;
+           color: #ffffff;
+       }
+       .dark .ios-input::placeholder, .dark .ios-textarea::placeholder {
+           color: #8e8e93;
+       }
+       .dark .ios-input:focus, .dark .ios-select:focus, .dark .ios-textarea:focus {
+           background-color: #3a3a3c;
+           border-color: #007aff;
+       }
+       .dark .ios-button-secondary {
+           background-color: #2c2c2e;
+           color: #007aff;
+       }
+       .dark .ios-button-secondary:hover {
+           background-color: #3a3a3c;
+       }
+       .dark .return-button {
+           background-color: #3a3a3c;
+           color: #f0f0f5;
+       }
+       .dark .return-button:hover {
+           background-color: #5a6268;
+       }
+       
+       /* Preview area remains white */
+       .dark #preview-content {
+           background-color: #ffffff; /* Keep the 'paper' white */
+           border-color: #3a3a3c;
+       }
+       /* All text inside the preview must be black */
+       .dark #preview-content .word-table,
+       .dark #preview-content .word-header-table,
+       .dark #preview-content .word-footer-table,
+       .dark #preview-content .word-title,
+       .dark #preview-content .word-h2,
+       .dark #preview-content .word-h3,
+       .dark #preview-content .word-p,
+       .dark #preview-content .word-ul,
+       .dark #preview-content th,
+       .dark #preview-content td,
+       .dark #preview-content .editable-description {
+           color: #000000;
+       }
+       .dark .placeholder-row td {
+           color: #666; /* Placeholder text inside preview */
+       }
+       .dark .loading-spinner svg {
+           color: #007aff;
+       }
+       /* --- END Dark Mode Styles --- */
+
+
+       /* --- NEW: Toggle Switch Styles --- */
+       .theme-switch-wrapper {
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
+       .theme-switch {
+           position: relative;
+           display: inline-block;
+           width: 51px;
+           height: 31px;
+       }
+       .theme-switch input {
+           opacity: 0;
+           width: 0;
+           height: 0;
+       }
+       .slider {
+           position: absolute;
+           cursor: pointer;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background-color: #ccc;
+           transition: .4s;
+           border-radius: 34px;
+       }
+       .slider:before {
+           position: absolute;
+           content: "";
+           height: 23px;
+           width: 23px;
+           left: 4px;
+           bottom: 4px;
+           background-color: white;
+           transition: .4s;
+           border-radius: 50%;
+       }
+       input:checked + .slider {
+           background-color: #007aff;
+       }
+       input:checked + .slider:before {
+           transform: translateX(20px);
+       }
+       /* --- END Toggle Switch --- */
+
+   </style>
+</head>
+<body class="bg-gray-100">
+   <script>
+       // Check if user is logged in
+       if (!sessionStorage.getItem('cm_v7_session')) {
+           window.location.href = 'login.html';
+       }
+
+       // --- NEW: Dark Mode Loader ---
+       // Runs before DOM content to prevent flash
+       (function() {
+           try {
+               const theme = localStorage.getItem('theme');
+               if (theme === 'dark') {
+                   document.documentElement.classList.add('dark');
+               } else {
+                   document.documentElement.classList.remove('dark');
+               }
+           } catch (e) {
+               console.warn('Could not access localStorage for theme.');
+           }
+       })();
+   </script>
+
+   <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+       <div class="mb-6">
+           <button id="returnButton" class="return-button">← Back to Home</button>
+       </div>
+       
+       <h1 class="text-4xl font-bold text-gray-900 mb-6 text-center">
+           AI Test Plan Generator
+       </h1>
+
+       <div class="space-y-8">
+           <div class="ios-card space-y-6">
+               <div class="flex justify-between items-center">
+                   <h2 class="text-2xl font-semibold text-gray-800">1. Configuration</h2>
+                   <div class="theme-switch-wrapper">
+                       <label for="theme-toggle" class="block text-sm font-medium text-gray-600">Theme</label>
+                       <label class="theme-switch">
+                           <input type="checkbox" id="theme-toggle">
+                           <span class="slider"></span>
+                       </label>
+                   </div>
+                   </div>
+
+
+               <div>
+                   <label class="block text-sm font-medium text-gray-600 mb-2">Logo Setup (Saved in Browser)</label>
+                   <div class="flex flex-wrap gap-2">
+                       <button id="loadLogoButton" class="ios-button-secondary">Load Logo</button>
+                       <button id="clearLogoButton" class="ios-button-danger" style="display: none;">Clear Logo</button>
+                   </div>
+                   <input type="file" id="logo-upload" class_="hidden" accept="image/*" style="display: none;">
+                   <p id="logo-status" class="text-xs text-gray-500 mt-2">Please load the logo to embed it in the export.</p>
+               </div>
+
+
+               <div>
+                   <label for="apiKey" class="block text-sm font-medium text-gray-600 mb-2">Gemini API Key (Optional)</label>
+                   <input type="password" id="apiKey" class="ios-input" placeholder="Leave blank to use built-in key">
+               </div>
+               
+               <div>
+                   <label class="block text-sm font-medium text-gray-600 mb-2">Start with a Template</label>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div>
+                           <h3 class="text-sm font-semibold text-gray-500 mb-2">Software & Systems</h3>
+                           <div class="flex flex-wrap gap-2">
+                               <button id="template1" class="ios-button-secondary">SOP Test Plan</button>
+                               <button id="template2" class="ios-button-secondary">UAT Test Plan</button>
+                               <button id="template5" class="ios-button-secondary">Integration Test Plan</button>
+                           </div>
+                       </div>
+                       <div>
+                           <h3 class="text-sm font-semibold text-gray-500 mb-2">Other</h3>
+                           <div class="flex flex-wrap gap-2">
+                               <button id="template4" class="ios-button-secondary">Hardware Test Plan</button>
+                               <button id="template6" class="ios-button-secondary">Process Audit</button>
+                           </div>
+                       </div>
+                   </div>
+                   <div class="mt-4">
+                        <button id="template3" class="ios-button-secondary">Clear All Fields</button>
+                   </div>
+               </div>
+
+               <div class="space-y-4">
+                   <div>
+                       <label for="title" class="block text-sm font-medium text-gray-600 mb-2">Test Plan Title</label>
+                       <input type="text" id="title" class="ios-input" placeholder="e.g., V-800i Machine Software Test Plan">
+                   </div>
+
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                           <label for="documentId" class="block text-sm font-medium text-gray-600 mb-2">Document ID</label>
+                           <input type="text" id="documentId" class="ios-input" placeholder="e.g., TP-V800i-SW-001">
+                       </div>
+                       <div>
+                           <label for="version" class="block text-sm font-medium text-gray-600 mb-2">Version</label>
+                           <input type="text" id="version" class="ios-input" placeholder="e.g., 1.0.0">
+                       </div>
+                   </div>
+                   <div>
+                       <label for="description" class="block text-sm font-medium text-gray-600 mb-2">Product Description & Test Scope</label>
+                       <textarea id="description" rows="6" class="ios-textarea" placeholder="Describe the product/system being tested. What is the goal of this test plan? What features are IN scope? What features are OUT of scope?"></textarea>
+                   </div>
+                   <div>
+                       <label for="audience" class="block text-sm font-medium text-gray-600 mb-2">Target Audience</label>
+                       <input type="text" id="audience" class="ios-input" placeholder="e.g., QA Engineers, Developers, Project Managers">
+                   </div>
+               </div>
+           </div>
+
+           <div class="ios-card relative">
+               <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                   <h2 class="text-2xl font-semibold text-gray-800">2. Live Preview</h2>
+                   <div class="flex flex-wrap gap-2">
+                       <button id="copyToDocsButton" class="ios-button-secondary">Open in Docs</button>
+                       <button id="exportExcelButton" class="ios-button-secondary">Export to Excel</button>
+                       <button id="exportButton" class="ios-button">Export to Word</button>
+                   </div>
+               </div>
+
+               <div id="loadingSpinner" class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-2xl dark:bg-gray-800 dark:bg-opacity-75">
+                   <div class="text-center">
+                       <svg class="animate-spin h-10 w-10 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                       <p id="loadingStatus" class="mt-2 text-gray-600 dark:text-gray-300">Generating... this may take a moment.</p>
+                   </div>
+               </div>
+
+               <div id="errorMessage" class="hidden text-red-600 bg-red-100 p-4 rounded-lg mb-4"></div>
+
+               <div id="preview-content" class="bg-white p-4 md:p-12">
+                   
+                   <table class="word-header-table">
+                       <tr>
+                           <td id="logo-wrapper" style="width: 50%; vertical-align: top;">
+                               <img id="logo-preview" src="" alt="Company Logo" style="width: 180px; height: auto; display: none;" crossorigin="anonymous">
+                           </td>
+                           <td style="width: 50%; text-align: right; vertical-align: top; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.2;">
+                               <b>ViTrox Technologies Sdn. Bhd.</b><br>
+                               746, Persiaran Cassia Selatan 3<br>
+                               14110 Bandar Cassia, Pulau Pinang, Malaysia<br>
+                               Tel: (+604) 545 9988
+                           </td>
+                       </tr>
+                   </table>
+
+                   <h1 id="preview-title" class="word-title">
+                       Test Plan Title Appears Here
+                   </h1>
+
+                   <table class="word-table w-full border-collapse border border-gray-400 mb-6 details-table">
+                       <tbody>
+                           <tr>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4">Document ID</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-documentId"></td>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4">Version</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-version"></td>
+                           </tr>
+                           <tr>
+                               <th class="border border-gray-400 p-2 bg-gray-100">Audience</th>
+                               <td class="border border-gray-400 p-2" colspan="3" id="preview-audience"></td>
+                           </tr>
+                       </tbody>
+                   </table>
+
+                   <div id="dynamic-content-area">
+                       <h2 class'word-h2'>1. Introduction</h2>
+                       <p class'word-p'><i>(AI-generated content will appear here after you fill out the fields above and the generator runs.)</i></p>
+                       
+                       <h2 class'word-h2'>2. Test Scope</h2>
+                       <h3 class'word-h3'>2.1. In Scope</h3>
+                       <ul class'word-ul'>
+                           <li><i>(Features to be tested...)</i></li>
+                       </ul>
+                       <h3 class'word-h3'>2.2. Out of Scope</h3>
+                       <ul class'word-ul'>
+                           <li><i>(Features not to be tested...)</i></li>
+                       </ul>
+
+                       <h2 class'word-h2'>3. Test Cases</h2>
+                       <p class'word-p'><i>(Detailed test cases will be generated in the table below.)</i></p>
+                       
+                       <table class="word-table w-full border-collapse border border-gray-400 checklist-table">
+                           <thead class="bg-gray-100">
+                               <tr>
+                                   <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Case ID</th>
+                                   <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Module</th>
+                                   <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Description</th>
+                                   <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Expected Result</th>
+                                   <th class="border border-gray-400 p-2 w-10">Del</th> 
+                                   <th class="border border-gray-400 p-2 w-10">Add</th> 
+                               </tr>
+                           </thead>
+                           <tbody id="checklist-body">
+                               <tr class="placeholder-row">
+                                   <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                                       <i>Test cases will be generated here, or click the (+) icon to manually insert one.</i>
+                                   </td>
+                               </tr>
+                           </tbody>
+                       </table>
+                   </div>
+
+                   <table class="word-footer-table">
+                       <tr>
+                           <td style="width: 50%; vertical-align: top;">
+                               <b>Prepared By:</b>
+                               <br>
+                               Name: _____________________
+                               <br>
+                               Date: _____________________
+                           </td>
+                           <td style="width: 50%; vertical-align: top;">
+                               <b>      Reviewed & Approved By:</b>
+                               <br>
+                                     Name: _____________________
+                               <br>
+                                     Date: _____________________
+                           </td>
+                       </tr>
+                   </table>
+
+               </div>
+               
+           </div>
+
+       </div>
+   </div>
+
+   <script type="module">
+       // NEW: Return button functionality
+       document.getElementById('returnButton').addEventListener('click', function() {
+           window.location.href = 'home.html';
+       });
+
+       // --- DOM Elements ---
+       const getEl = (id) => document.getElementById(id);
+       const inputs = {
+           apiKey: getEl('apiKey'),
+           title: getEl('title'),
+           documentId: getEl('documentId'),
+           version: getEl('version'),
+           description: getEl('description'),
+           audience: getEl('audience'),
+       };
+       const buttons = {
+           template1: getEl('template1'),
+           template2: getEl('template2'),
+           template3: getEl('template3'),
+           template4: getEl('template4'),
+           template5: getEl('template5'),
+           template6: getEl('template6'),
+           exportButton: getEl('exportButton'),
+           exportExcelButton: getEl('exportExcelButton'),
+           copyToDocsButton: getEl('copyToDocsButton'), // <-- NEW BUTTON ADDED
+           loadLogoButton: getEl('loadLogoButton'), 
+           clearLogoButton: getEl('clearLogoButton'), 
+       };
+       const preview = {
+           title: getEl('preview-title'),
+           documentId: getEl('preview-documentId'),
+           version: getEl('preview-version'),
+           audience: getEl('preview-audience'),
+           body: getEl('checklist-body'),
+           content: getEl('preview-content'),
+           dynamicContent: getEl('dynamic-content-area'),
+           logo: getEl('logo-preview'),
+           logoUpload: getEl('logo-upload'), 
+           logoStatus: getEl('logo-status'), 
+       };
+       const statusElements = {
+           loading: getEl('loadingSpinner'),
+           loadingStatus: getEl('loadingStatus'),
+           error: getEl('errorMessage'),
+       };
+       // --- NEW: Theme Toggle Element ---
+       const themeToggle = getEl('theme-toggle');
+
+       // --- State ---
+       let debounceTimer;
+       
+       // --- UPDATED: Gemini Models Array (Newest to Oldest Fallbacks) ---
+       const GEMINI_MODELS = [
+           'gemini-3-flash-preview',
+           'gemini-2.5-flash',
+           'gemini-2.5-flash-lite',
+           'gemini-2.5-flash-preview-09-2025',
+           'gemini-2.0-flash-exp',
+           'gemini-1.5-flash'
+       ];
+
+       // --- Templates ---
+       const templates = {
+           template1: { // SOP
+               fields: {
+                   title: "Standard Operating Procedure (SOP) Test Plan",
+                   documentId: "TP-SOP-001",
+                   version: "1.0",
+                   description: "Product: V-800i Machine Software v2.5\nTest Goal: To verify that the software's new 'Automated Defect Recognition' (ADR) module adheres to the revised Standard Operating Procedure (SOP-015).\nIN SCOPE: All user workflows defined in SOP-015, including setup, execution, and reporting. All error handling and alerts specified in the SOP.\nOUT OF SCOPE: Performance testing, security testing, testing of legacy modules not mentioned in SOP-015.",
+                   audience: "QA Team, Production Supervisors, Compliance Auditors"
+               }
+           },
+           template2: { // UAT
+               fields: {
+                   title: "User Acceptance Testing (UAT) Plan - V-Inspect 3.0",
+                   documentId: "TP-UAT-VI-002",
+                   version: "0.9 (Draft)",
+                   description: "Product: V-Inspect 3.0 (New Inspection Software)\nTest Goal: To conduct UAT with key end-users (production operators and supervisors) to confirm the software is intuitive, meets all business requirements, and is ready for production deployment.\nIN SCOPE: Real-world scenarios, usability and user experience, workflow efficiency, report accuracy, all core features used by operators.\nOUT OF SCOPE: Unit testing, integration testing (already completed), API testing, code-level analysis.",
+                   audience: "End Users (Operators, Supervisors), Project Manager, QA Lead"
+               }
+           },
+           template3: { // Clear
+               fields: { title: "", documentId: "", version: "", description: "", audience: "" },
+           },
+           template4: { // Hardware
+               fields: {
+                   title: "V-910i Hardware Qualification Test Plan",
+                   documentId: "TP-HW-V910-001",
+                   version: "1.0",
+                   description: "Product: V-910i Automated Optical Inspection (AOI) Machine - New Rev. B Mainboard\nTest Goal: To validate the functionality, reliability, and performance of the new Rev. B mainboard under operational stress.\nIN SCOPE: Power-on self-test (POST), I/O port functionality (USB, Ethernet, GigE), thermal performance under load, compatibility with existing peripherals (camera, motion controller), 72-hour soak test.\nOUT OF SCOPE: Software feature testing (except for drivers), EMI/EMC certification (handled by 3rd party), full system-level software UAT.",
+                   audience: "Hardware Engineering Team, QA Engineers, System Integrators"
+               }
+           },
+           template5: { // Integration
+               fields: {
+                   title: "V-One Integration Test Plan (V-Inspect & MES)",
+                   documentId: "TP-INT-VONE-001",
+                   version: "1.0",
+                   description: "Product: Integration between V-Inspect Software v3.0 and customer's Manufacturing Execution System (MES).\nTest Goal: To verify that data flows correctly and timely between V-Inspect and the MES system via the new API integration.\nIN SCOPE: Sending inspection results from V-Inspect to MES, fetching work orders from MES to V-Inspect, error handling for API downtime or invalid data, data integrity and format validation.\nOUT OF SCOPE: Standalone functionality of V-Inspect (already tested), standalone functionality of MES, UI testing of either system.",
+                   audience: "Integration Specialists, QA Team, MES Administrator"
+               }
+           },
+           template6: { // Process Audit
+               fields: {
+                   title: "Internal Audit Test Plan - Software Development Lifecycle (SDLC)",
+                   documentId: "TP-AUDIT-SDLC-001",
+                   version: "1.0",
+                   description: "Process: Software Development Lifecycle (SDLC) as defined in QMS-004.\nTest Goal: To audit three recent projects (Project A, B, C) to ensure they complied with the defined SDLC process, including requirements gathering, code review, testing, and release procedures.\nIN SCOPE: Review of project documentation (Jira, Confluence), verification of code review records, confirmation of test plan execution and approval, validation of release notes and deployment procedures.\nOUT OF SCOPE: Auditing the quality of the code itself, performance of the final product, financial audit of the projects.",
+                   audience: "Internal Audit Team, Head of Engineering, QA Manager"
+               }
+           }
+       };
+
+       // --- Event Listeners ---
+       
+       Object.values(inputs).forEach(input => {
+           input.addEventListener('input', handleInputChange);
+       });
+
+       buttons.template1.addEventListener('click', () => loadTemplate(templates.template1));
+       buttons.template2.addEventListener('click', () => loadTemplate(templates.template2));
+       buttons.template3.addEventListener('click', () => loadTemplate(templates.template3));
+       buttons.template4.addEventListener('click', () => loadTemplate(templates.template4));
+       buttons.template5.addEventListener('click', () => loadTemplate(templates.template5));
+       buttons.template6.addEventListener('click', () => loadTemplate(templates.template6));
+
+       buttons.exportButton.addEventListener('click', exportToWord);
+       buttons.exportExcelButton.addEventListener('click', exportToExcel);
+       buttons.copyToDocsButton.addEventListener('click', copyToDocs); // <-- NEW LISTENER ADDED
+
+       buttons.loadLogoButton.addEventListener('click', () => preview.logoUpload.click());
+       preview.logoUpload.addEventListener('change', handleLogoUpload);
+       buttons.clearLogoButton.addEventListener('click', clearLogo);
+
+       // --- NEW: Theme Toggle Listener ---
+       themeToggle.addEventListener('change', () => {
+           if (themeToggle.checked) {
+               document.documentElement.classList.add('dark');
+               localStorage.setItem('theme', 'dark');
+           } else {
+               document.documentElement.classList.remove('dark');
+               localStorage.setItem('theme', 'light');
+           }
+       });
+
+
+       // --- Functions ---
+       
+       function loadTemplate(template) {
+           inputs.title.value = template.fields.title;
+           inputs.documentId.value = template.fields.documentId;
+           inputs.version.value = template.fields.version;
+           inputs.description.value = template.fields.description;
+           inputs.audience.value = template.fields.audience;
+           
+           // Trigger update and AI generation
+           handleInputChange();
+       }
+
+       function updatePreviewFields() {
+           preview.title.textContent = inputs.title.value || 'Test Plan Title Appears Here';
+           preview.documentId.textContent = inputs.documentId.value;
+           preview.version.textContent = inputs.version.value;
+           preview.audience.textContent = inputs.audience.value;
+       }
+
+       function handleInputChange() {
+           updatePreviewFields();
+           clearTimeout(debounceTimer);
+           
+           debounceTimer = setTimeout(() => {
+               generateTestPlan();
+           }, 1500); // Wait 1.5 seconds after user stops typing
+       }
+       
+       function handleLogoUpload(event) {
+           const file = event.target.files[0];
+           if (!file || !file.type.startsWith('image/')) {
+               showError("Please select a valid image file.");
+               return;
+           }
+           const reader = new FileReader();
+           
+           reader.onload = (e) => {
+               const newLogoDataUri = e.target.result; 
+               
+               try {
+                   localStorage.setItem('vitroxLogoBase64', newLogoDataUri);
+
+                   preview.logo.src = newLogoDataUri;
+                   preview.logo.style.display = 'block'; 
+                   
+                   preview.logoStatus.textContent = `Logo "${file.name}" saved to browser!`;
+                   preview.logoStatus.style.color = 'green';
+                   buttons.loadLogoButton.textContent = 'Change Logo';
+                   buttons.clearLogoButton.style.display = 'inline-block'; 
+                   showError(null); 
+               } catch (error) {
+                   console.error("Error saving to localStorage: ", error);
+                   showError("Failed to save logo. Storage might be full.");
+                   preview.logoStatus.textContent = "Failed to save logo. Storage might be full.";
+                   preview.logoStatus.style.color = 'red';
+               }
+           };
+           
+           reader.onerror = () => {
+               showError("Failed to read the logo file.");
+               preview.logoStatus.textContent = "Failed to read logo.";
+               preview.logoStatus.style.color = 'red';
+           };
+           
+           reader.readAsDataURL(file);
+       }
+
+       function clearLogo() {
+           localStorage.removeItem('vitroxLogoBase64');
+           preview.logo.src = '';
+           preview.logo.style.display = 'none';
+           preview.logoStatus.textContent = "Logo cleared. You can load a new one.";
+           preview.logoStatus.style.color = '#6b7280'; // gray-500
+           buttons.loadLogoButton.textContent = 'Load Logo';
+           buttons.clearLogoButton.style.display = 'none'; 
+           showError(null);
+       }
+
+       /**
+        * AI Test Plan Generation
+        */
+       async function generateTestPlan() {
+           const { title, description, documentId, version, audience } = Object.fromEntries(
+               Object.entries(inputs).map(([key, el]) => [key, el.value])
+           );
+           
+           // Use the fallback key
+           const apiKey = inputs.apiKey.value.trim() || "AIzaSyCUDhfkmgZAKRSPCBTLZcoLnTWecW-DmkQ"; 
+
+           if (!title || !description) {
+               preview.dynamicContent.innerHTML = `
+                   <h2 class'word-h2'>1. Introduction</h2>
+                   <p class'word-p'><i>Please fill in "Test Plan Title" and "Product Description & Test Scope" to generate the test plan.</i></p>
+               `;
+               preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>Fill in fields above to generate test cases.</i>
+                       </td>
+                   </tr>
+               `;
+               return;
+           }
+
+           showLoading(true, "Generating test plan...");
+           showError(null);
+
+           const systemPrompt = `You are an expert QA Manager tasked with generating a professional Test Plan document.
+Your response MUST be a single, valid JSON object. Do not include any other text, markdown formatting, or explanations.
+The JSON object must have exactly two keys:
+1. "sections": A string containing the HTML for the main body of the test plan (Introduction, Scope, Strategy, etc.). Use the provided CSS classes: 'word-h2', 'word-h3', 'word-p', 'word-ul', 'word-li'.
+2. "test_cases": An array of JSON objects, where each object represents a test case. Each test case object must have keys: "id" (string, e.g., "TC-MOD-001"), "module" (string), "description" (string), and "expected_result" (string).
+Generate at least 5 introductory sections and 15 detailed test cases based on the user's input. 
+The HTML in the "sections" key must be well-structured and directly related to the user's input.
+The test cases must be specific, actionable, and detailed.
+`;
+
+           const userQuery = `Generate a complete test plan based on the following details:
+- Title: ${title}
+- Document ID: ${documentId}
+- Version: ${version}
+- Audience: ${audience}
+- Product Description & Test Scope: ${description}
+
+Remember to output ONLY the JSON object with the "sections" (HTML string) and "test_cases" (array) keys.
+`;
+
+           const payload = {
+               contents: [{ parts: [{ text: userQuery }] }],
+               systemInstruction: {
+                   parts: [{ text: systemPrompt }]
+               },
+               generationConfig: {
+                   responseMimeType: "application/json", 
+                   temperature: 0.5,
+               }
+           };
+
+           let result = null;
+           let successModel = '';
+           let lastError = null;
+
+           // --- Loop through models from newest to older ---
+           for (const model of GEMINI_MODELS) {
+               const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+               try {
+                   // console.log(`Attempting generation with model: ${model}`); // Debug
+                   
+                   const response = await fetch(apiUrl, {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify(payload)
+                   });
+
+                   // If request fails
+                   if (!response.ok) {
+                       // If model not found (404) or invalid request (400), try next model immediately
+                       if (response.status === 404 || response.status === 400) {
+                           throw new Error(`Model ${model} not found or invalid.`);
+                       }
+                       // Other errors (500, 429) - also try next model for resilience
+                       const errorBody = await response.json().catch(() => ({}));
+                       throw new Error(errorBody.error?.message || `HTTP error! status: ${response.status}`);
+                   }
+
+                   const data = await response.json();
+                   
+                   // Validate basic structure
+                   if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        throw new Error(`Invalid response structure from ${model}.`);
+                   }
+
+                   // If we get here, it succeeded
+                   result = data;
+                   successModel = model;
+                   break; // Exit loop
+
+               } catch (error) {
+                   console.warn(`Model ${model} failed:`, error.message);
+                   lastError = error;
+                   // Loop continues to next model...
+               }
+           }
+
+           try {
+               if (!result) {
+                   throw new Error("All AI models failed to respond. Please check your API key or internet connection.");
+               }
+
+               const parts = result.candidates?.[0]?.content?.parts;
+               const generatedContent = JSON.parse(parts[0].text);
+               
+               if (!generatedContent.sections || !generatedContent.test_cases) {
+                   throw new Error("AI response was missing the required 'sections' or 'test_cases' keys.");
+               }
+
+               // 1. Render HTML Sections
+               preview.dynamicContent.innerHTML = generatedContent.sections;
+               
+               // 2. Append the Test Case table shell after the generated sections
+               const tableHtml = `
+                   <h2 class'word-h2'>Test Cases</h2>
+                   <table class="word-table w-full border-collapse border border-gray-400 checklist-table">
+                       <thead class="bg-gray-100">
+                           <tr>
+                               <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Case ID</th>
+                               <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Module</th>
+                               <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Test Description</th>
+                               <th class="border border-gray-400 p-2 editable-header" contenteditable="true">Expected Result</th>
+                               <th class="border border-gray-400 p-2 w-10">Del</th> 
+                               <th class="border border-gray-400 p-2 w-10">Add</th> 
+                           </tr>
+                       </thead>
+                       <tbody id="checklist-body">
+                       </tbody>
+                   </table>
+               `;
+               preview.dynamicContent.insertAdjacentHTML('beforeend', tableHtml);
+
+               // 3. Update the global preview.body to point to the new table body
+               preview.body = getEl('checklist-body');
+
+               // 4. Render the test case rows
+               renderChecklist(generatedContent.test_cases);
+
+           } catch (error) {
+               console.error("Error calling Gemini API:", error);
+               // Use lastError if available and specific, otherwise use general error
+               const msg = lastError ? lastError.message : error.message;
+               showError(`Failed to generate test plan: ${msg}`);
+               preview.dynamicContent.innerHTML = `<h2 class'word-h2'>Error</h2><p class'word-p'>${msg}</p>`;
+           } finally {
+               showLoading(false);
+           }
+       }
+
+       /**
+        * Test Case Row Management
+        */
+       function renderChecklist(items) {
+           if (!items || items.length === 0) {
+                preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>No test cases were generated. Click the (+) icon to manually insert one.</i>
+                       </td>
+                   </tr>
+               `;
+               return;
+           }
+
+           preview.body.innerHTML = ''; 
+           items.forEach((item, index) => {
+               const row = createChecklistRow(item, index);
+               preview.body.appendChild(row);
+           });
+           updateRowNumbers(); // This function isn't strictly needed if using TC-IDs, but good for consistency
+       }
+
+       function createChecklistRow(item, index) {
+           const row = document.createElement('tr');
+           row.classList.add('checklist-row'); 
+           
+           const id = item.id || `TC-NEW-${index + 1}`;
+           const module = item.module || 'New Module';
+           const description = item.description || 'New Test Case (Click to Edit)';
+           const expected_result = item.expected_result || 'Expected result...';
+           
+           row.innerHTML = `
+               <td class="border border-gray-400 p-2 editable-description" contenteditable="true">${id}</td>
+               <td class="border border-gray-400 p-2 editable-description" contenteditable="true">${module}</td>
+               <td class="border border-gray-400 p-2 editable-description" contenteditable="true">${description}</td>
+               <td class="border border-gray-400 p-2 editable-description" contenteditable="true">${expected_result}</td>
+               <td class="border border-gray-400 p-1 w-10 text-center">
+                   <button class="remove-row-button text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove Row">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                       </svg>
+                   </button>
+               </td>
+               <td class="border border-gray-400 p-1 w-10 text-center">
+                   <button class="add-row-below-button text-green-500 hover:text-green-700 p-1 rounded transition-colors" title="Add Row Below">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           <line x1="12" y1="5" x2="12" y2="19"></line>
+                           <line x1="5" y1="12" x2="19" y2="12"></line>
+                       </svg>
+                   </button>
+               </td>
+           `;
+           
+           row.querySelector('.remove-row-button').addEventListener('click', () => removeRow(row));
+           row.querySelector('.add-row-below-button').addEventListener('click', () => addRow(row));
+
+           return row;
+       }
+
+       function updateRowNumbers() {
+           // Not strictly needed for Test Plans with unique IDs, but kept for logic consistency
+       }
+
+       function addRow(currentRow = null) {
+           const placeholder = preview.body.querySelector('.placeholder-row');
+           if (placeholder) {
+               placeholder.remove();
+           }
+           
+           // Generate a temporary ID based on current count
+           const count = preview.body.querySelectorAll('.checklist-row').length + 1;
+           const newRow = createChecklistRow({ id: `TC-NEW-${count}`, module: '', description: '', expected_result: '' }, count);
+           
+           if (currentRow && currentRow.classList.contains('checklist-row')) {
+               currentRow.after(newRow);
+           } else {
+               preview.body.appendChild(newRow);
+           }
+       }
+
+       function removeRow(rowElement) {
+           rowElement.remove();
+
+           if (preview.body.querySelectorAll('.checklist-row').length === 0) {
+               preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>No test cases. Click the (+) icon to manually insert one.</i>
+                       </td>
+                   </tr>
+               `;
+           }
+       }
+
+       /**
+        * Copy for Docs Logic (Replaces Export to Word partially)
+        */
+       async function copyToDocs() {
+           showLoading(true, "Preparing for Docs...");
+           showError(null);
+           
+           let logoBase64 = localStorage.getItem('vitroxLogoBase64');
+           
+           // Clone the content to modify it for export without touching the live preview
+           const tempDiv = document.createElement('div');
+           tempDiv.innerHTML = preview.content.innerHTML;
+
+           // Handle logo presence
+           const img = tempDiv.querySelector('#logo-preview');
+           const logoWrapper = tempDiv.querySelector('#logo-wrapper');
+           
+           if (img && logoWrapper) {
+               if (logoBase64) {
+                   img.src = logoBase64; 
+                   img.style.width = "130px";
+                   img.style.height = "auto";
+                   img.style.display = 'block'; 
+               } else {
+                   logoWrapper.remove(); 
+                   const addressCell = tempDiv.querySelector('.word-header-table td');
+                   if (addressCell) {
+                       addressCell.style.width = "80%";
+                       addressCell.style.textAlign = "center";
+                       addressCell.setAttribute('colspan', '0.5');
+                   }
+               }
+           }
+
+           // Cleanup: Remove Del/Add columns from the test case table
+           const tableBody = tempDiv.querySelector('tbody'); // There might be multiple tbodies (header table), so be careful
+           // We want the checklist-table specifically
+           const checklistTable = tempDiv.querySelector('.checklist-table');
+           
+           if (checklistTable) {
+               const headerRow = checklistTable.querySelector('thead tr');
+               if (headerRow) {
+                   const ths = headerRow.querySelectorAll('th');
+                   if (ths.length >= 6) {
+                       ths[5].remove(); // Add
+                       ths[4].remove(); // Del
+                   }
+               }
+               const bodyRows = checklistTable.querySelectorAll('tbody tr');
+               bodyRows.forEach(row => {
+                   const cells = row.querySelectorAll('td');
+                   if (cells.length === 6) {
+                       cells[5].remove();
+                       cells[4].remove();
+                   }
+                   // Handle contenteditable: Make sure text is retained and attribute removed
+                   row.querySelectorAll('[contenteditable]').forEach(ce => {
+                       ce.removeAttribute('contenteditable');
+                   });
+               });
+           }
+
+           // Clean up all contenteditable elements in the clone
+           tempDiv.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+           const content = tempDiv.innerHTML;
+
+           const fullHtml = `
+           <!DOCTYPE html>
+           <html>
+           <head>
+               <meta charset="UTF-8">
+               <title>${inputs.title.value || 'Test Plan'}</title>
+               <style>
+                   @page { size: 8.5in 11in; margin: 0.15in; }
+                   body { font-family: 'Times New Roman', Times, serif; color: #000000; width: 8.2in; margin: 0 auto; }
+                   .word-header-table, .word-footer-table, .word-table { width: 100%; border-collapse: collapse; font-family: 'Times New Roman', Times, serif; }
+                   .word-header-table { margin-bottom: 20px; line-height: 1.2; border: none; font-size: 11pt; }
+                   .word-footer-table { margin-top: 30px; font-size: 10pt; border: none; }
+                   .word-footer-table td { line-height: 1.2; }
+                   .word-table { font-size: 11pt; }
+                   .word-table th, .word-table td { border: 1px solid #000000; padding: 0.05in; vertical-align: top; text-align: left; }
+                   .word-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+                   .word-title { font-size: 16pt; font-weight: bold; margin-bottom: 20px; text-align: center; }
+                   .word-h2 { font-size: 14pt; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+                   .word-h3 { font-size: 12pt; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+                   .word-p { font-size: 11pt; line-height: 1.5; margin-bottom: 0.5rem; }
+                   .word-ul { list-style-type: disc; margin-left: 0.5in; margin-bottom: 0.5rem; font-size: 11pt; }
+                   .word-li { margin-bottom: 0.25rem; }
+               </style>
+           </head>
+           <body>
+               ${content}
+           </body>
+           </html>
+           `;
+
+           try {
+               const blob = new Blob([fullHtml], { type: 'text/html' }); 
+               const data = [new ClipboardItem({ 'text/html': blob })];
+               await navigator.clipboard.write(data);
+               
+               const button = getEl('copyToDocsButton');
+               const originalText = button.textContent;
+               button.textContent = "Copied! Opening Docs...";
+               button.classList.remove('ios-button-secondary');
+               button.classList.add('ios-button'); 
+               
+               // Open Google Docs
+               window.open('https://docs.new', '_blank');
+
+               setTimeout(() => {
+                   button.textContent = originalText;
+                   button.classList.add('ios-button-secondary');
+                   button.classList.remove('ios-button');
+               }, 3000);
+
+           } catch (err) {
+               console.error('Failed to copy HTML to clipboard:', err);
+               showError("Failed to copy for Docs. See console for details.");
+           } finally {
+               showLoading(false);
+           }
+       }
+
+       async function exportToWord() {
+           // Re-use logic from copyToDocs but save as file
+           showLoading(true, "Exporting Word...");
+           showError(null);
+           
+           // ... (Most logic is identical to copyToDocs, but constructs a Blob and uses saveAs) ...
+           // For brevity, I will use a simplified version here which is essentially copyToDocs but FileSaver.
+           
+           // [Code for ExportToWord would go here, effectively the same as copyToDocs but ending with saveAs]
+           // Since the user focused on the "Copy to Docs" functionality, I implemented that fully above.
+           
+           // Note: The structure is identical to copyToDocs, just the output mechanism differs.
+            let logoBase64 = localStorage.getItem('vitroxLogoBase64');
+           const tempDiv = document.createElement('div');
+           tempDiv.innerHTML = preview.content.innerHTML;
+           
+           const img = tempDiv.querySelector('#logo-preview');
+           const logoWrapper = tempDiv.querySelector('#logo-wrapper');
+            if (img && logoWrapper) {
+               if (logoBase64) {
+                   img.src = logoBase64; img.style.width = "130px"; img.style.height = "auto"; img.style.display = 'block'; 
+               } else {
+                   logoWrapper.remove(); 
+                   const addressCell = tempDiv.querySelector('.word-header-table td');
+                   if (addressCell) { addressCell.style.width = "80%"; addressCell.style.textAlign = "center"; addressCell.setAttribute('colspan', '0.5'); }
+               }
+           }
+           
+           // Clean up table
+            const checklistTable = tempDiv.querySelector('.checklist-table');
+           if (checklistTable) {
+               const headerRow = checklistTable.querySelector('thead tr');
+               if (headerRow) { const ths = headerRow.querySelectorAll('th'); if (ths.length >= 6) { ths[5].remove(); ths[4].remove(); } }
+               const bodyRows = checklistTable.querySelectorAll('tbody tr');
+               bodyRows.forEach(row => { const cells = row.querySelectorAll('td'); if (cells.length === 6) { cells[5].remove(); cells[4].remove(); } row.querySelectorAll('[contenteditable]').forEach(ce => ce.removeAttribute('contenteditable')); });
+           }
+           tempDiv.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+           const fullHtml = `
+           <!DOCTYPE html><html><head><meta charset="UTF-8"><title>${inputs.title.value}</title>
+           <style>
+               @page { size: 8.5in 11in; margin: 0.5in; }
+               body { font-family: 'Times New Roman', Times, serif; width: 7.5in; margin: 0 auto; }
+               .word-header-table, .word-footer-table, .word-table { width: 100%; border-collapse: collapse; font-family: 'Times New Roman', Times, serif; }
+               .word-header-table { margin-bottom: 20px; line-height: 1.2; border: none; font-size: 11pt; }
+               .word-footer-table { margin-top: 30px; font-size: 10pt; border: none; }
+               .word-table { font-size: 11pt; }
+               .word-table th, .word-table td { border: 1px solid #000000; padding: 0.05in; vertical-align: top; text-align: left; }
+               .word-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+               .word-title { font-size: 16pt; font-weight: bold; margin-bottom: 20px; text-align: center; }
+               .word-h2 { font-size: 14pt; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+               .word-h3 { font-size: 12pt; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+               .word-p { font-size: 11pt; line-height: 1.5; margin-bottom: 0.5rem; }
+               .word-ul { list-style-type: disc; margin-left: 0.5in; margin-bottom: 0.5rem; font-size: 11pt; }
+           </style></head><body>${tempDiv.innerHTML}</body></html>`;
+
+           const blob = new Blob([fullHtml], { type: 'application/msword' });
+           saveAs(blob, `${inputs.title.value || 'test_plan'}.doc`);
+           showLoading(false);
+       }
+
+       function exportToExcel() {
+           // Exports just the Test Cases table
+           const table = preview.body.closest('table');
+           if (!table) { showError("No table to export."); return; }
+           
+           // Clone table to remove Add/Del cols
+           const wb = XLSX.utils.book_new();
+           
+           // Create data array manually to ensure clean data
+           const rows = [];
+           rows.push(["Test Case ID", "Module", "Description", "Expected Result"]);
+           
+           preview.body.querySelectorAll('tr').forEach(tr => {
+               if (tr.classList.contains('placeholder-row')) return;
+               const cells = tr.querySelectorAll('td');
+               if (cells.length >= 4) {
+                   rows.push([
+                       cells[0].innerText,
+                       cells[1].innerText,
+                       cells[2].innerText,
+                       cells[3].innerText
+                   ]);
+               }
+           });
+
+           const ws = XLSX.utils.aoa_to_sheet(rows);
+           XLSX.utils.book_append_sheet(wb, ws, "Test Cases");
+           XLSX.writeFile(wb, `${inputs.title.value || 'test_cases'}.xlsx`);
+       }
+
+       function showLoading(isLoading, text="Generating...") {
+           statusElements.loading.classList.toggle('hidden', !isLoading);
+           if (isLoading) {
+               statusElements.loadingStatus.textContent = text;
+           }
+       }
+
+       function showError(message) {
+           if (message) {
+               statusElements.error.textContent = message;
+               statusElements.error.classList.remove('hidden');
+           } else {
+               statusElements.error.classList.add('hidden');
+           }
+       }
+       
+       function init() {
+           // --- NEW: Set Theme Toggle State ---
+           try {
+               const theme = localStorage.getItem('theme');
+               if (theme === 'dark') {
+                   themeToggle.checked = true;
+               } else {
+                   themeToggle.checked = false;
+               }
+           } catch (e) {
+               console.warn('Could not access localStorage for theme.');
+           }
+
+           try {
+               const savedLogo = localStorage.getItem('vitroxLogoBase64');
+               if (savedLogo) {
+                   preview.logo.src = savedLogo;
+                   preview.logo.style.display = 'block';
+                   preview.logoStatus.textContent = "Logo loaded from memory.";
+                   preview.logoStatus.style.color = 'green';
+                   buttons.loadLogoButton.textContent = 'Change Logo';
+                   buttons.clearLogoButton.style.display = 'inline-block';
+               }
+           } catch (error) {
+               console.error("Could not access localStorage: ", error);
+           }
+           handleInputChange();
+       }
+
+       init(); 
+
+   </script>
+</body>
+</html>

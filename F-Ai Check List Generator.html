@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en"> <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>AI Checklist Generator</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+   <style>
+       /* Custom Styles for iOS-inspired look */
+       body {
+           font-family: 'Inter', sans-serif;
+           background-color: #ffffff; /* Light gray background */
+           transition: background-color 0.3s ease;
+       }
+       .ios-card {
+           background-color: #ffffff;
+           border-radius: 1.25rem; /* 20px */
+           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+           padding: 2rem;
+           transition: background-color 0.3s ease;
+       }
+       .ios-input, .ios-select, .ios-textarea {
+           background-color: #f8f8f8;
+           border: 1px solid #e0e0e0;
+           border-radius: 0.75rem; /* 12px */
+           padding: 1rem 1.25rem; /* 16px 20px */
+           width: 100%;
+           transition: all 0.2s ease-in-out;
+           font-size: 1rem;
+           color: #111;
+       }
+       .ios-input:focus, .ios-select:focus, .ios-textarea:focus {
+           outline: none;
+           border-color: #007aff;
+           background-color: #ffffff;
+           box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+       }
+       .ios-button {
+           background-color: #007aff;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.875rem 1.5rem;
+           transition: all 0.2s ease-in-out;
+           box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+       }
+       .ios-button:hover {
+           background-color: #0056b3;
+           transform: translateY(-2px);
+           box-shadow: 0 6px 16px rgba(0, 122, 255, 0.2);
+       }
+
+       .ios-button-secondary {
+           background-color: #e5e5ea;
+           color: #007aff;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+       }
+       .ios-button-secondary:hover {
+           background-color: #dcdce0;
+       }
+
+       .ios-button-danger {
+           background-color: #ff3b30;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem; /* 12px */
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+       }
+       .ios-button-danger:hover {
+           background-color: #c70000;
+       }
+
+       /* Updated preview content style */
+       #preview-content {
+           background-color: #ffffff;
+           border: 1px solid #e0e0e0;
+           border-radius: 0.5rem;
+           /* A4 Page-like proportions */
+           max-width: 816px; /* A4 width at 96 DPI */
+           min-height: 1056px; /* A4 height at 96 DPI */
+           margin-left: auto;
+           margin-right: auto;
+           overflow-y: auto;
+           /* IMPORTANT: Keep preview content light even in dark mode */
+           color: #000;
+       }
+
+       /* --- Style for editable description in preview --- */
+       .editable-description {
+           transition: box-shadow 0.2s ease-in-out;
+           cursor: text;
+       }
+       .editable-description:focus {
+           outline: none;
+           box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4); /* Blue focus ring */
+           border-radius: 4px;
+       }
+       
+       /* --- NEW: Style for editable table headers --- */
+       .editable-header {
+           cursor: text;
+           transition: background-color 0.2s ease-in-out;
+       }
+       .editable-header:hover {
+           background-color: #eef8ff; /* Light blue tint on hover */
+       }
+       .editable-header:focus {
+           outline: none;
+           box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4); /* Blue focus ring */
+       }
+       /* ---------------------------------- */
+
+
+       /* Styles for the Word Export */
+       @media print {
+           body { -webkit-print-color-adjust: exact; }
+       }
+       .word-table {
+           width: 100%;
+           border-collapse: collapse;
+           font-family: 'Times New Roman', Times, serif; /* CHANGED */
+           font-size: 11pt;
+           color: #000000; /* ADDED */
+       }
+       .word-table th, .word-table td {
+           border: 1px solid #000000;
+           padding:  0.05in;
+           text-align: center; /* MODIFIED: Center align all th/td by default */
+       }
+       .word-table th {
+           background-color: #f0f0f0;
+           font-weight: bold;
+       }
+       /* MODIFIED: Make table data left-aligned */
+       .word-table td {
+           text-align: left;
+       }
+       /* MODIFIED: Re-center specific columns */
+       .word-table td:first-child {
+           text-align: center;
+       }
+       .checklist-table td:nth-child(4) {
+            text-align: center;
+       }
+       
+       .word-header-table {
+           width: 100%;
+           border: none;
+           font-family: 'Times New Roman', Times, serif; /* CHANGED */
+           font-size: 11pt; /* CHANGED */
+           margin-bottom: 20px;
+           color: #000000; /* ADDED */
+       }
+       .word-footer-table {
+           width: 100%;
+           border: none;
+           font-family: 'Times New Roman', Times, serif; /* CHANGED */
+           font-size: 10pt;
+           margin-top: 30px;
+           color: #000000; /* ADDED */
+       }
+       .word-title {
+           font-size: 16pt;
+           font-weight: bold;
+           margin-bottom: 20px;
+           color: #000000; /* Ensure title is black */
+       }
+       .word-checkbox {
+           width: 16px;
+           height: 16px;
+           border: 1px solid #000;
+           display: inline-block;
+           vertical-align: middle;
+       }
+       .word-comment-box {
+           width: 95%;
+           height: 40px;
+           border: 1px dotted #888;
+       }
+       
+       /* NEW: Return button styling */
+       .return-button {
+           background-color: #6c757d;
+           color: white;
+           font-weight: 600;
+           border-radius: 0.75rem;
+           padding: 0.75rem 1.25rem;
+           transition: all 0.2s ease-in-out;
+           box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
+           border: none;
+           cursor: pointer;
+           margin-right: 10px;
+       }
+       .return-button:hover {
+           background-color: #5a6268;
+           transform: translateY(-2px);
+           box-shadow: 0 6px 16px rgba(108, 117, 125, 0.2);
+       }
+
+       /* --- NEW: Dark Mode Styles --- */
+       .dark body {
+           background-color: #000000;
+       }
+       .dark h1, .dark h2, .dark h3,
+       .dark .text-gray-900, .dark .text-gray-800, 
+       .dark .text-gray-600, .dark .text-gray-500,
+       .dark label, .dark #logo-status {
+           color: #f0f0f5;
+       }
+       .dark .ios-card {
+           background-color: #1c1c1e;
+       }
+       .dark .ios-input, .dark .ios-select, .dark .ios-textarea {
+           background-color: #2c2c2e;
+           border-color: #3a3a3c;
+           color: #ffffff;
+       }
+       .dark .ios-input::placeholder, .dark .ios-textarea::placeholder {
+           color: #8e8e93;
+       }
+       .dark .ios-input:focus, .dark .ios-select:focus, .dark .ios-textarea:focus {
+           background-color: #3a3a3c;
+           border-color: #007aff;
+       }
+       .dark .ios-button-secondary {
+           background-color: #2c2c2e;
+           color: #007aff;
+       }
+       .dark .ios-button-secondary:hover {
+           background-color: #3a3a3c;
+       }
+       .dark .return-button {
+           background-color: #3a3a3c;
+           color: #f0f0f5;
+       }
+       .dark .return-button:hover {
+           background-color: #5a6268;
+       }
+       
+       /* Preview area remains white */
+       .dark #preview-content {
+           background-color: #ffffff; /* Keep the 'paper' white */
+           border-color: #3a3a3c;
+       }
+       /* But the elements inside the preview must have black text */
+       .dark #preview-content .word-table,
+       .dark #preview-content .word-header-table,
+       .dark #preview-content .word-footer-table,
+       .dark #preview-content .word-title,
+       .dark #preview-content th,
+       .dark #preview-content td,
+       .dark #preview-content .editable-description {
+           color: #000000;
+       }
+       .dark .placeholder-row td {
+           color: #666; /* Placeholder text inside preview */
+       }
+       .dark .loading-spinner svg {
+           color: #007aff;
+       }
+
+       /* --- NEW: Toggle Switch Styles --- */
+       .theme-switch-wrapper {
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
+       .theme-switch {
+           position: relative;
+           display: inline-block;
+           width: 51px;
+           height: 31px;
+       }
+       .theme-switch input {
+           opacity: 0;
+           width: 0;
+           height: 0;
+       }
+       .slider {
+           position: absolute;
+           cursor: pointer;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background-color: #ccc;
+           transition: .4s;
+           border-radius: 34px;
+       }
+       .slider:before {
+           position: absolute;
+           content: "";
+           height: 23px;
+           width: 23px;
+           left: 4px;
+           bottom: 4px;
+           background-color: white;
+           transition: .4s;
+           border-radius: 50%;
+       }
+       input:checked + .slider {
+           background-color: #007aff;
+       }
+       input:checked + .slider:before {
+           transform: translateX(20px);
+       }
+   </style>
+</head>
+<body class="bg-gray-100">
+   <script>
+       // Check if user is logged in
+       if (!sessionStorage.getItem('cm_v7_session')) {
+           window.location.href = 'login.html';
+       }
+
+       // --- NEW: Dark Mode Loader ---
+       // Runs before DOM content to prevent flash
+       (function() {
+           try {
+               const theme = localStorage.getItem('theme');
+               if (theme === 'dark') {
+                   document.documentElement.classList.add('dark');
+               } else {
+                   document.documentElement.classList.remove('dark');
+               }
+           } catch (e) {
+               console.warn('Could not access localStorage for theme.');
+           }
+       })();
+   </script>
+
+   <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+       <div class="mb-6">
+           <button id="returnButton" class="return-button">← Back to Home</button>
+       </div>
+       
+       <h1 class="text-4xl font-bold text-gray-900 mb-6 text-center">
+           AI Checklist Generator
+       </h1>
+
+       <div class="space-y-8">
+
+           <div class="ios-card space-y-6">
+               <div class="flex justify-between items-center">
+                   <h2 class="text-2xl font-semibold text-gray-800">1. Configuration</h2>
+                   <div class="theme-switch-wrapper">
+                       <label for="theme-toggle" class="block text-sm font-medium text-gray-600">Theme</label>
+                       <label class="theme-switch">
+                           <input type="checkbox" id="theme-toggle">
+                           <span class="slider"></span>
+                       </label>
+                   </div>
+                   </div>
+
+
+               <div>
+                   <label class="block text-sm font-medium text-gray-600 mb-2">Logo Setup (Saved in Browser)</label>
+                   <div class="flex flex-wrap gap-2">
+                       <button id="loadLogoButton" class="ios-button-secondary">Load Logo</button>
+                       <button id="clearLogoButton" class="ios-button-danger" style="display: none;">Clear Logo</button>
+                   </div>
+                   <input type="file" id="logo-upload" class_="hidden" accept="image/*" style="display: none;">
+                   <p id="logo-status" class="text-xs text-gray-500 mt-2">Please load the logo to embed it in the export.</p>
+               </div>
+
+
+               <div>
+                   <label for="apiKey" class="block text-sm font-medium text-gray-600 mb-2">Gemini API Key (Optional)</label>
+                   <input type="password" id="apiKey" class="ios-input" placeholder="Leave blank to use built-in key">
+               </div>
+               
+               <div>
+                   <label class="block text-sm font-medium text-gray-600 mb-2">Start with a Template</label>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div>
+                           <h3 class="text-sm font-semibold text-gray-500 mb-2">Mechanical & General</h3>
+                           <div class="flex flex-wrap gap-2">
+                               <button id="template1" class="ios-button-secondary">Machine Setup</button>
+                               <button id="template5" class="ios-button-secondary">Employee Onboarding</button>
+                               <button id="template6" class="ios-button-secondary">Cleaning Checklist</button>
+                               <button id="template4" class="ios-button-secondary">Software Deployment</button>
+                           </div>
+                       </div>
+                       <div>
+                           <h3 class="text-sm font-semibold text-gray-500 mb-2">Electrical (w/ Test Table)</h3>
+                           <div class="flex flex-wrap gap-2">
+                               <button id="template2" class="ios-button-secondary">Safety Audit</button>
+                               <button id="template7" class="ios-button-secondary">Electronics Test</button>
+                           </div>
+                       </div>
+                   </div>
+                   <div class="mt-4">
+                        <button id="template3" class="ios-button-secondary">Clear All Fields</button>
+                   </div>
+               </div>
+
+               <div class="space-y-4">
+                   <div>
+                       <label for="title" class="block text-sm font-medium text-gray-600 mb-2">Checklist Title</label>
+                       <input type="text" id="title" class="ios-input" placeholder="e.g., V-800 Machine Pre-Operation">
+                   </div>
+                   
+                   <div>
+                       <label for="category" class="block text-sm font-medium text-gray-600 mb-2">Category</label>
+                       <select id="category" class="ios-select">
+                           <option value="Mechanical">Mechanical</option>
+                           <option value="Electrical">Electrical</option>
+                           <option value="Software">Software</option>
+                           <option value="HR">HR</option>
+                           <option value="Facilities">Facilities</option>
+                       </select>
+                   </div>
+
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                           <label for="machineModel" class="block text-sm font-medium text-gray-600 mb-2">Machine Model</label>
+                           <input type="text" id="machineModel" class="ios-input" placeholder="e.g., V810i">
+                       </div>
+                       <div>
+                           <label for="machineSerial" class="block text-sm font-medium text-gray-600 mb-2">Machine Serial No.</label>
+                           <input type="text" id="machineSerial" class="ios-input" placeholder="e.g., V810i-XXXXXX">
+                       </div>
+                       <div>
+                           <label for="instrumentModel" class="block text-sm font-medium text-gray-600 mb-2">Instrument Model</label>
+                           <input type="text" id="instrumentModel" class="ios-input" placeholder="e.g., Caliper-A">
+                       </div>
+                       <div>
+                           <label for="instrumentSerial" class="block text-sm font-medium text-gray-600 mb-2">Instrument Serial No.</label>
+                           <input type="text" id="instrumentSerial" class="ios-input" placeholder="e.g., INST-YYYYYY">
+                       </div>
+                   </div>
+                   <div>
+                       <label for="description" class="block text-sm font-medium text-gray-600 mb-2">Description & Objective</label>
+                       <textarea id="description" rows="6" class="ios-textarea" placeholder="Describe the machine, process, or area to be checked, and what the goal of this checklist is."></textarea>
+                   </div>
+
+                   <div class="hidden">
+                       <label for="objective" class="block text-sm font-medium text-gray-600 mb-2">Objective</label>
+                       <textarea id="objective" rows="3" class="ios-textarea" placeholder="What is the goal of this checklist? (e.g., Ensure operator safety, verify machine calibration)"></textarea>
+                   </div>
+               </div>
+           </div>
+
+           <div class="ios-card relative">
+               <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                   <h2 class="text-2xl font-semibold text-gray-800">2. Live Preview</h2>
+                   <div class="flex flex-wrap gap-2">
+                       <button id="copyDocsButton" class="ios-button-secondary">Open in Docs</button>
+                       <button id="copySheetsButton" class="ios-button-secondary">Export to Sheets</button>
+                       <button id="exportButton" class="ios-button">Export to Word</button>
+                   </div>
+               </div>
+
+               <div id="loadingSpinner" class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-2xl dark:bg-gray-800 dark:bg-opacity-75">
+                   <div class="text-center">
+                       <svg class="animate-spin h-10 w-10 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                       <p id="modelStatusText" class="text-sm text-gray-600 dark:text-gray-300">Generating...</p>
+                   </div>
+               </div>
+
+               <div id="errorMessage" class="hidden text-red-600 bg-red-100 p-4 rounded-lg mb-4"></div>
+
+               <div id="preview-content" class="bg-white p-4 md:p-8">
+                   
+                   <table class="word-header-table">
+                       <tr>
+                           <td id="logo-wrapper" style="width: 50%; vertical-align: top;">
+                               <img id="logo-preview" src="" alt="Company Logo" style="width: 180px; height: auto; display: none;" crossorigin="anonymous">
+                           </td>
+                           <td style="width: 50%; text-align: right; vertical-align: top; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.2;">
+                               <b>ViTrox Technologies Sdn. Bhd.</b><br>
+                               746, Persiaran Cassia Selatan 3<br>
+                               14110 Bandar Cassia, Pulau Pinang, Malaysia<br>
+                               Tel: (+604) 545 9988
+                           </td>
+                       </tr>
+                   </table>
+
+                   <h2 id="preview-title" class="word-title text-center text-xl font-bold my-6">
+                       Checklist Title Appears Here
+                   </h2>
+
+                   <table class="word-table w-full border-collapse border border-gray-400 mb-6 details-table">
+                       <tbody>
+                           <tr>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4" style="text-align: center;">Machine Model</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-machineModel"></td>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4" style="text-align: center;">Machine Serial No.</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-machineSerial"></td>
+                           </tr>
+                           <tr>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4" style="text-align: center;">Instrument Model</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-instrumentModel"></td>
+                               <th class="border border-gray-400 p-2 bg-gray-100 w-1/4" style="text-align: center;">Instrument Serial No.</th>
+                               <td class="border border-gray-400 p-2 w-1/4" id="preview-instrumentSerial"></td>
+                           </tr>
+                       </tbody>
+                   </table>
+                   <table class="word-table w-full border-collapse border border-gray-400 checklist-table">
+                       <thead class="bg-gray-100">
+                           <tr>
+                               <th class="border border-gray-400 p-2 w-16 editable-header" contenteditable="true">No.</th>
+                               <th class="border border-gray-400 p-2 w-2/5 editable-header" contenteditable="true">Description</th>
+                               <th class="border border-gray-400 p-2 w-48 editable-header" contenteditable="true">Image/Reference</th>
+                               <th class="border border-gray-400 p-2 w-24 editable-header" contenteditable="true">Check</th>
+                               <th class="border border-gray-400 p-2 w-10">Del</th> 
+                               <th class="border border-gray-400 p-2 w-10">Add</th> 
+                           </tr>
+                       </thead>
+                       <tbody id="checklist-body">
+                           <tr class="placeholder-row">
+                               <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #fcfafa;">
+                                   <i>Checklist items will be generated here, or click the (+) icon to manually insert one.</i>
+                               </td>
+                           </tr>
+                       </tbody>
+                   </table>
+
+                   <div id="template-specific-content" class="mt-6"></div>
+
+
+                   <table class="word-footer-table">
+                       <tr>
+                           <td style="width: 50%; vertical-align: top;">
+                               <b>Production Checked By:</b>
+                               <br>
+                               Name: _____________________
+                               <br>
+                               Date: _____________________
+                           </td>
+                           <td style="width: 50%; vertical-align: top;">
+                               <b>      QA Verify & Acknowledged By:</b>
+                               <br>
+                                     Name: _____________________
+                               <br>
+                                     Date: _____________________
+                           </td>
+                       </tr>
+                   </table>
+
+               </div>
+               
+           </div>
+
+       </div>
+   </div>
+
+   <script type="module">
+       // NEW: Return button functionality
+       document.getElementById('returnButton').addEventListener('click', function() {
+           window.location.href = 'home.html';
+       });
+
+       // --- DOM Elements ---
+       const getEl = (id) => document.getElementById(id);
+       const inputs = {
+           apiKey: getEl('apiKey'),
+           title: getEl('title'),
+           category: getEl('category'),
+           machineModel: getEl('machineModel'),
+           machineSerial: getEl('machineSerial'),
+           instrumentModel: getEl('instrumentModel'),
+           instrumentSerial: getEl('instrumentSerial'),
+           description: getEl('description'),
+           objective: getEl('objective'), 
+       };
+       const buttons = {
+           template1: getEl('template1'),
+           template2: getEl('template2'),
+           template3: getEl('template3'),
+           template4: getEl('template4'),
+           template5: getEl('template5'),
+           template6: getEl('template6'),
+           template7: getEl('template7'),
+           exportButton: getEl('exportButton'),
+           loadLogoButton: getEl('loadLogoButton'), 
+           clearLogoButton: getEl('clearLogoButton'), 
+       };
+       const preview = {
+           title: getEl('preview-title'),
+           machineModel: getEl('preview-machineModel'),
+           machineSerial: getEl('preview-machineSerial'),
+           instrumentModel: getEl('preview-instrumentModel'),
+           instrumentSerial: getEl('preview-instrumentSerial'),
+           body: getEl('checklist-body'),
+           content: getEl('preview-content'),
+           logo: getEl('logo-preview'),
+           logoUpload: getEl('logo-upload'), 
+           logoStatus: getEl('logo-status'), 
+           templateSpecificContent: getEl('template-specific-content'),
+           modelStatus: getEl('modelStatusText'), // Added for model feedback
+       };
+       const statusElements = {
+           loading: getEl('loadingSpinner'),
+           error: getEl('errorMessage'),
+       };
+       // --- NEW: Theme Toggle Element ---
+       const themeToggle = getEl('theme-toggle');
+
+       // --- State ---
+       let debounceTimer;
+       
+       // --- GEMINI MODELS CONFIGURATION ---
+       // Ordered from Newest/Best to Older/Backup as requested.
+       const GEMINI_MODELS = [
+           'gemini-3-flash-preview',
+           'gemini-2.5-flash',
+           'gemini-2.5-flash-lite',
+           'gemini-2.0-flash-exp', // Current robust experimental model
+           'gemini-1.5-pro',
+           'gemini-1.5-flash',
+           'gemini-2.5-flash-preview-09-2025' // Previous specific model
+       ];
+
+       // --- Templates ---
+       const templates = {
+           template1: {
+               fields: {
+                   title: "V-800 Machine Pre-Operation Checklist",
+                   category: "Mechanical",
+                   machineModel: "V-800",
+                   machineSerial: "V800-12345",
+                   instrumentModel: "Digital Caliper",
+                   instrumentSerial: "DC-67890",
+                   description: "Daily pre-operation checks for the V-800 automated inspection machine. The objective is to ensure the V-800 machine is safe to operate and all mechanical components are in good working order before starting a production run.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Check machine for any visible damage or leaks.", reference: "" },
+                   { description: "Verify emergency stop buttons are functional.", reference: "SOP-001" },
+                   { description: "Confirm all safety guards are in place and secure.", reference: "" },
+                   { description: "Check compressed air pressure (must be > 6 Bar).", reference: "Manual p.12" },
+                   { description: "Verify conveyor belts are clean and tensioned.", reference: "" },
+                   { description: "Check coolant level is between MIN and MAX marks.", reference: "" },
+               ],
+               extraHtml: "" 
+           },
+           template2: {
+               fields: {
+                   title: "Quarterly Workshop Safety Audit",
+                   category: "Electrical",
+                   machineModel: "N/A",
+                   machineSerial: "N/A",
+                   instrumentModel: "Multimeter",
+                   instrumentSerial: "MM-ABCDE",
+                   description: "A comprehensive safety audit for the main electrical workshop, covering all power tools, wiring, and safety equipment. The objective is to identify and rectify any electrical hazards, ensure compliance with safety regulations, and prevent accidents.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Inspect all power tools for damaged cords or plugs.", reference: "Reg 1910.334" },
+                   { description: "Verify all electrical panels are clearly labeled.", reference: "" },
+                   { description: "Check that all outlets and circuits are properly grounded.", reference: "Use tester" },
+                   { description: "Ensure fire extinguishers (Class C) are accessible and charged.", reference: "" },
+                   { description: "Confirm walkways are clear of cables and trip hazards.", reference: "" },
+                   { description: "Test functionality of GFCI outlets.", reference: "" },
+               ],
+               extraHtml: ""
+           },
+           template3: {
+               fields: {
+                   title: "", 
+                   category: "Mechanical", 
+                   machineModel: "", 
+                   machineSerial: "", 
+                   instrumentModel: "", 
+                   instrumentSerial: "", 
+                   description: "", 
+                   objective: ""
+               },
+               items: [],
+               extraHtml: ""
+           },
+           template4: {
+               fields: {
+                   title: "Web App Deployment Checklist (v1.2.0)",
+                   category: "Software",
+                   machineModel: "Production Server",
+                   machineSerial: "N/A",
+                   instrumentModel: "N/A",
+                   instrumentSerial: "N/A",
+                   description: "Checklist for deploying version 1.2.0 of the main web application to the production environment. Objective is to ensure a smooth deployment with no downtime and all features functional.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Confirm all (v1.2.0) code is merged to 'main' branch.", reference: "Git" },
+                   { description: "Verify all automated tests (unit, integration) have passed.", reference: "CI Pipeline" },
+                   { description: "Create database backup and verify integrity.", reference: "DB-SOP-04" },
+                   { description: "Enable 'Maintenance Mode' for the application.", reference: "" },
+                   { description: "Deploy new build to production environment.", reference: "" },
+                   { description: "Run database migration scripts.", reference: "" },
+                   { description: "Clear application and server caches.", reference: "" },
+                   { description: "Disable 'Maintenance Mode'.", reference: "" },
+                   { description: "Perform smoke testing on critical features (login, checkout).", reference: "" },
+                   { description: "Monitor error logs for 1 hour post-deployment.", reference: "Monitoring Tool" },
+               ],
+               extraHtml: ""
+           },
+           template5: {
+               fields: {
+                   title: "New Employee Onboarding Checklist - Sales",
+                   category: "HR",
+                   machineModel: "Laptop",
+                   machineSerial: "On Request",
+                   instrumentModel: "N/A",
+                   instrumentSerial: "N/A",
+                   description: "Checklist for onboarding a new employee to the Sales department. Objective is to ensure the new hire is fully equipped and integrated within their first week.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Send welcome email with first-day schedule.", reference: "HR-TEMP-01" },
+                   { description: "Prepare workstation (desk, laptop, phone).", reference: "IT Ticket" },
+                   { description: "Create all system accounts (Email, CRM, HRIS).", reference: "" },
+                   { description: "Schedule introductory meetings with team lead and manager.", reference: "" },
+                   { description: "Conduct company policy and compliance training.", reference: "HR Portal" },
+                   { description: "Assign a 'buddy' or mentor.", reference: "" },
+                   { description: "Review 30-60-90 day plan with the new hire.", reference: "" },
+                   { description: "Add employee to relevant communication channels (e.g., Teams).", reference: "" },
+               ],
+               extraHtml: ""
+           },
+           template6: {
+               fields: {
+                   title: "Daily Office Kitchen Cleaning Checklist",
+                   category: "Facilities",
+                   machineModel: "Dishwasher",
+                   machineSerial: "DW-002",
+                   instrumentModel: "N/A",
+                   instrumentSerial: "N/A",
+                   description: "Daily cleaning tasks for the 3rd floor office kitchen. Objective is to maintain a clean and hygienic space for all employees.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Empty, clean, and run the dishwasher.", reference: "" },
+                   { description: "Wipe down all countertops and tables with sanitizer.", reference: "" },
+                   { description: "Clean interior and exterior of microwave ovens.", reference: "" },
+                   { description: "Restock coffee, tea, and paper towels.", reference: "" },
+                   { description: "Empty all trash and recycling bins.", reference: "" },
+                   { description: "Check refrigerator for and dispose of expired food.", reference: "Friday only" },
+                   { description: "Sweep and mop the floor.", reference: "" },
+               ],
+               extraHtml: ""
+           },
+           template7: {
+               fields: {
+                   title: "Electronics PCB Test Procedure",
+                   category: "Electrical",
+                   machineModel: "Device Under Test (DUT)",
+                   machineSerial: "DUT-SN-001",
+                   instrumentModel: "Oscilloscope",
+                   instrumentSerial: "OSC-002",
+                   description: "Functional test procedure for the Rev 2.1 PCB. Objective is to verify all key components, power rails, and signals are operating within specification.",
+                   objective: ""
+               },
+               items: [
+                   { description: "Inspect PCB for visual defects (soldering, component placement).", reference: "IPC-A-610" },
+                   { description: "Connect 5V power supply.", reference: "" },
+                   { description: "Verify 'Power Good' LED (D1) is green.", reference: "Schematic p.1" },
+                   { description: "Perform voltage rail checks (see table below).", reference: "TP1, TP2, TP3" },
+                   { description: "Check 32MHz clock signal at TP4.", reference: "Use Scope" },
+                   { description: "Run I/O loopback test.", reference: "Test Jig" },
+               ],
+               extraHtml: `
+                   <h3 class="text-lg font-semibold mt-6 mb-4 text-gray-800" style="color: #fcfafa;">Test Point Measurements</h3>
+                   <table class="word-table w-full border-collapse border border-gray-400 mb-6">
+                       <thead class="bg-gray-100">
+                           <tr>
+                               <th class="border border-gray-400 p-2">Test Point</th>
+                               <th class="border border-gray-400 p-2">Expected Value</th>
+                               <th class="border border-gray-400 p-2">Measured Value</th>
+                               <th class="border border-gray-400 p-2">Pass/Fail</th>
+                               <th class="border border-gray-400 p-2 w-48">Comment</th>
+                           </tr>
+                       </thead>
+                       <tbody>
+                           <tr>
+                               <td class="border border-gray-400 p-2">TP1 (VCC)</td>
+                               <td class="border border-gray-400 p-2">5.0V +/- 0.2V</td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Enter value..."></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="P/F"></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Add comment..."></td>
+                           </tr>
+                           <tr>
+                               <td class="border border-gray-400 p-2">TP2 (3.3V Rail)</td>
+                               <td class="border border-gray-400 p-2">3.3V +/- 0.1V</td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Enter value..."></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="P/F"></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Add comment..."></td>
+                           </tr>
+                           <tr>
+                               <td class="border border-gray-400 p-2">TP3 (Current Draw)</td>
+                               <td class="border border-gray-400 p-2">< 150mA</td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Enter value..."></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="P/F"></td>
+                               <td class="border border-gray-400 p-1"><input type="text" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Add comment..."></td>
+                           </tr>
+                       </tbody>
+                   </table>
+               `
+           }
+       };
+
+       // --- Event Listeners ---
+       
+       Object.values(inputs).forEach(input => {
+           input.addEventListener('input', handleInputChange);
+       });
+
+       buttons.template1.addEventListener('click', () => loadTemplate(templates.template1));
+       buttons.template2.addEventListener('click', () => loadTemplate(templates.template2));
+       buttons.template3.addEventListener('click', () => loadTemplate(templates.template3));
+       buttons.template4.addEventListener('click', () => loadTemplate(templates.template4));
+       buttons.template5.addEventListener('click', () => loadTemplate(templates.template5));
+       buttons.template6.addEventListener('click', () => loadTemplate(templates.template6));
+       buttons.template7.addEventListener('click', () => loadTemplate(templates.template7));
+
+       buttons.exportButton.addEventListener('click', exportToWord);
+       getEl('copySheetsButton').addEventListener('click', copyForSheets);
+       getEl('copyDocsButton').addEventListener('click', copyForDocs);
+
+       buttons.loadLogoButton.addEventListener('click', () => preview.logoUpload.click());
+       preview.logoUpload.addEventListener('change', handleLogoUpload);
+       buttons.clearLogoButton.addEventListener('click', clearLogo);
+       
+       // --- NEW: Theme Toggle Listener ---
+       themeToggle.addEventListener('change', () => {
+           if (themeToggle.checked) {
+               document.documentElement.classList.add('dark');
+               localStorage.setItem('theme', 'dark');
+           } else {
+               document.documentElement.classList.remove('dark');
+               localStorage.setItem('theme', 'light');
+           }
+       });
+
+
+       // --- Functions ---
+       
+       function loadTemplate(template) {
+           inputs.title.value = template.fields.title;
+           inputs.category.value = template.fields.category;
+           inputs.machineModel.value = template.fields.machineModel;
+           inputs.machineSerial.value = template.fields.machineSerial;
+           inputs.instrumentModel.value = template.fields.instrumentModel;
+           inputs.instrumentSerial.value = template.fields.instrumentSerial;
+           inputs.description.value = template.fields.description;
+           inputs.objective.value = template.fields.objective;
+           
+           preview.title.textContent = template.fields.title || 'Checklist Title Appears Here';
+           preview.machineModel.textContent = template.fields.machineModel;
+           preview.machineSerial.textContent = template.fields.machineSerial;
+           preview.instrumentModel.textContent = template.fields.instrumentModel;
+           preview.instrumentSerial.textContent = template.fields.instrumentSerial;
+
+           renderChecklist(template.items);
+           preview.templateSpecificContent.innerHTML = template.extraHtml || '';
+           clearTimeout(debounceTimer);
+       }
+
+       function handleInputChange() {
+           preview.title.textContent = inputs.title.value || 'Checklist Title Appears Here';
+           preview.machineModel.textContent = inputs.machineModel.value;
+           preview.machineSerial.textContent = inputs.machineSerial.value;
+           preview.instrumentModel.textContent = inputs.instrumentModel.value;
+           preview.instrumentSerial.textContent = inputs.instrumentSerial.value;
+
+           clearTimeout(debounceTimer);
+           
+           debounceTimer = setTimeout(() => {
+               preview.templateSpecificContent.innerHTML = '';
+               generateChecklist();
+           }, 1000); 
+       }
+       
+       function handleLogoUpload(event) {
+           const file = event.target.files[0];
+           if (!file || !file.type.startsWith('image/')) {
+               showError("Please select a valid image file.");
+               return;
+           }
+           const reader = new FileReader();
+           
+           reader.onload = (e) => {
+               const newLogoDataUri = e.target.result; 
+               
+               try {
+                   localStorage.setItem('vitroxLogoBase64', newLogoDataUri);
+
+                   preview.logo.src = newLogoDataUri;
+                   preview.logo.style.display = 'block'; 
+                   
+                   preview.logoStatus.textContent = `Logo "${file.name}" saved to browser!`;
+                   preview.logoStatus.style.color = 'green';
+                   buttons.loadLogoButton.textContent = 'Change Logo';
+                   buttons.clearLogoButton.style.display = 'inline-block'; 
+                   showError(null); 
+               } catch (error) {
+                   console.error("Error saving to localStorage: ", error);
+                   showError("Failed to save logo. Storage might be full.");
+                   preview.logoStatus.textContent = "Failed to save logo. Storage might be full.";
+                   preview.logoStatus.style.color = 'red';
+               }
+           };
+           
+           reader.onerror = () => {
+               showError("Failed to read the logo file.");
+               preview.logoStatus.textContent = "Failed to read logo.";
+               preview.logoStatus.style.color = 'red';
+           };
+           
+           reader.readAsDataURL(file);
+       }
+
+       function clearLogo() {
+           localStorage.removeItem('vitroxLogoBase64');
+           preview.logo.src = '';
+           preview.logo.style.display = 'none';
+           preview.logoStatus.textContent = "Logo cleared. You can load a new one.";
+           preview.logoStatus.style.color = '#6b7280'; // gray-500
+           buttons.loadLogoButton.textContent = 'Load Logo';
+           buttons.clearLogoButton.style.display = 'none'; 
+           showError(null);
+       }
+
+
+       function copyForSheets() {
+           const tsvRows = [];
+           const colSep = "\t"; 
+           
+           tsvRows.push(`Title:${colSep}${inputs.title.value}`);
+           tsvRows.push(`Category:${colSep}${inputs.category.value}`);
+           tsvRows.push(`Machine Model:${colSep}${inputs.machineModel.value}`);
+           tsvRows.push(`Machine Serial:${colSep}${inputs.machineSerial.value}`);
+           tsvRows.push(`Instrument Model:${colSep}${inputs.instrumentModel.value}`);
+           tsvRows.push(`Instrument Serial:${colSep}${inputs.instrumentSerial.value}`);
+           tsvRows.push(""); 
+
+           const headers = ["No.", "Description", "Image/Reference", "Check"];
+           tsvRows.push(headers.join(colSep));
+
+           const rows = preview.body.querySelectorAll('.checklist-row');
+           rows.forEach(row => {
+               const number = row.querySelector('.row-number')?.textContent.trim() || '';
+               const description = row.querySelector('.editable-description')?.textContent.trim() || '';
+               const reference = row.querySelector('input[type="text"]')?.value.trim() || '';
+               const checked = row.querySelector('input[type="checkbox"]')?.checked ? 'Y' : 'N';
+               
+               const cleanDesc = description.replace(/[\n\t]/g, " ");
+               const cleanRef = reference.replace(/[\n\t]/g, " ");
+
+               tsvRows.push([number, cleanDesc, cleanRef, checked].join(colSep));
+           });
+           
+           const extraTable = preview.templateSpecificContent.querySelector('.word-table');
+           if (extraTable) {
+               tsvRows.push(""); 
+               tsvRows.push("--- Additional Data ---");
+               const extraRows = extraTable.querySelectorAll('tr');
+               extraRows.forEach(row => {
+                   const cells = row.querySelectorAll('th, td');
+                   const cellData = [];
+                   cells.forEach(cell => {
+                       const input = cell.querySelector('input[type="text"]');
+                       let text = (input ? input.value : cell.textContent).trim();
+                       text = text.replace(/[\n\t]/g, " "); 
+                       cellData.push(text);
+                   });
+                   tsvRows.push(cellData.join(colSep));
+               });
+           }
+
+           const tsvString = tsvRows.join("\n");
+           navigator.clipboard.writeText(tsvString).then(() => {
+               const button = getEl('copySheetsButton');
+               const originalText = button.textContent;
+               button.textContent = "Copied! Opening Sheet..."; 
+               button.classList.remove('ios-button-secondary');
+               button.classList.add('ios-button'); 
+               
+               window.open('https://sheets.new', '_blank');
+
+               setTimeout(() => {
+                   button.textContent = originalText;
+                   button.classList.add('ios-button-secondary');
+                   button.classList.remove('ios-button');
+               }, 3000); 
+           }).catch(err => {
+               console.error('Failed to copy to clipboard:', err);
+               showError("Failed to copy. See console for details.");
+           });
+       }
+       
+       
+       async function copyForDocs() {
+           showLoading(true);
+           showError(null);
+           
+           let logoBase64 = localStorage.getItem('vitroxLogoBase64');
+           
+           // === Get Dynamic Column Widths ===
+           const detailsTable = preview.content.querySelector('.details-table');
+           const detailsCells = detailsTable.querySelectorAll('tr:first-child > *');
+           const detailsTableWidth = detailsTable.offsetWidth;
+           const detailsColWidths = Array.from(detailsCells).map(cell => (cell.offsetWidth / detailsTableWidth) * 100);
+
+           const checklistTable = preview.content.querySelector('.checklist-table');
+           const checklistThs = checklistTable.querySelectorAll('thead th');
+           const checklistTableWidth = checklistTable.offsetWidth;
+           const checkColWidths = Array.from(checklistThs).map(th => (th.offsetWidth / checklistTableWidth) * 100);
+           // === END ===
+
+           const tempDiv = document.createElement('div');
+           tempDiv.innerHTML = preview.content.innerHTML;
+
+           // MODIFICATION: Handle logo presence
+           const img = tempDiv.querySelector('#logo-preview');
+           const logoWrapper = tempDiv.querySelector('#logo-wrapper');
+           
+           if (img && logoWrapper) {
+               if (logoBase64) {
+                   img.src = logoBase64; 
+                   img.style.width = "90px";
+                   img.style.height = "auto";
+                   img.style.display = 'block'; 
+               } else {
+                   // If no logo, just remove the logo wrapper cell
+                   logoWrapper.remove(); 
+                   
+                   // Find the remaining address cell and make it full width/centered
+                   const remainingCell = tempDiv.querySelector('.word-header-table td');
+                   if (remainingCell) {
+                       remainingCell.style.width = "80%";
+                       remainingCell.style.textAlign = "center";
+                       remainingCell.setAttribute('colspan', '0.5');
+                   }
+               }
+           }
+           // --- End Logo/Header Logic ---
+
+           // --- Clean up the table structure for export ---
+           const tableBody = tempDiv.querySelector('#checklist-body');
+           const tableHeaderRow = tempDiv.querySelector('.word-table thead tr');
+
+           if (tableHeaderRow) {
+               const headerCells = tableHeaderRow.querySelectorAll('th');
+               if (headerCells.length >= 6) { 
+                   headerCells[5].remove(); 
+                   headerCells[4].remove(); 
+               }
+           }
+
+           const tempDescriptions = tempDiv.querySelectorAll('.editable-description');
+           tempDescriptions.forEach((cell) => {
+               cell.removeAttribute('contenteditable');
+               cell.classList.remove('editable-description'); 
+           });
+           // Remove editable from headers too
+           tempDiv.querySelectorAll('.editable-header').forEach((cell) => {
+               cell.removeAttribute('contenteditable');
+               cell.classList.remove('editable-header');
+           });
+
+           const rows = tableBody.querySelectorAll('tr');
+           rows.forEach(row => {
+               const cells = row.querySelectorAll('td');
+               if (cells.length === 6) { 
+                   cells[5].remove(); 
+                   cells[4].remove(); 
+               }
+               if (row.classList.contains('placeholder-row')) {
+                   const placeholderCell = row.querySelector('td');
+                   if(placeholderCell) placeholderCell.setAttribute('colspan', '4'); 
+               }
+           });
+
+           // === START 100% PREVIEW MODIFICATION ===
+
+           // MODIFICATION: Persist checkbox 'checked' state
+           const originalCheckboxes = preview.content.querySelectorAll('input[type="checkbox"]');
+           const tempCheckboxes = tempDiv.querySelectorAll('input[type="checkbox"]');
+           originalCheckboxes.forEach((cb, index) => {
+               if (tempCheckboxes[index] && cb.checked) {
+                   tempCheckboxes[index].setAttribute('checked', 'checked');
+               }
+           });
+
+           // MODIFICATION: Persist text input 'value'
+           const originalInputs = preview.content.querySelectorAll('.word-table input[type="text"]');
+           const tempInputs = tempDiv.querySelectorAll('.word-table input[type="text"]');
+           originalInputs.forEach((input, index) => {
+               if (tempInputs[index]) {
+                   tempInputs[index].setAttribute('value', input.value);
+               }
+           });
+           
+           // === END 100% PREVIEW MODIFICATION ===
+           
+           const content = tempDiv.innerHTML;
+
+           const fullHtml = `
+           <!DOCTYPE html>
+           <html>
+           <head>
+               <meta charset="UTF-8">
+               <title>${inputs.title.value || 'Checklist'}</title>
+               <style>
+                   @page {
+                       size: 8.5in 11in;
+                       /* MODIFICATION: Changed margin to 0.15in */
+                       margin: 0.15in; 
+                   }
+                   body {
+                       font-family: 'Times New Roman', Times, serif; /* CHANGED */
+                       color: #000000; /* CHANGED */
+                       /* MODIFICATION: Changed width to 8.2in */
+                       width: 8.2in; 
+                       margin: 0 auto;
+                   }
+                   .word-header-table, .word-footer-table, .word-table {
+                       width: 100%;
+                       border-collapse: collapse;
+                       font-family: 'Times New Roman', Times, serif; /* CHANGED */
+                   }
+                   .word-header-table, .word-footer-table {
+                       border: none;
+                       font-size: 11pt; /* CHANGED */
+                   }
+                   /* MODIFICATION: Removed line-height rule for address */
+                   .word-header-table { 
+                       margin-bottom: 20px; 
+                       line-height: 0.5; /* ADDED */
+                   }
+                   .word-footer-table { margin-top: 30px; }
+                   /* MODIFICATION: Added single line-height for signatures */
+                   .word-footer-table td {
+                       line-height: 1.2;
+                   }
+                   .word-table {
+                       font-size: 11pt;
+                   }
+                   .word-table th, .word-table td {
+                       border: 1px solid #000000;
+                       padding: 0.05in;
+                       vertical-align: middle;
+                       text-align: center; /* MODIFIED */
+                   }
+                   .word-table th {
+                       background-color: #f0f0f0;
+                       font-weight: bold;
+                       text-align: center; /* MODIFIED: Center all headers */
+                   }
+                   .word-title {
+                       font-size: 16pt;
+                       font-weight: bold;
+                       margin-bottom: 20px;
+                       text-align: center; 
+                   }
+                   
+                   /* MODIFICATION: Added/updated padding for details table */
+                   .details-table th, .details-table td {
+                       padding: 0.15in; 
+                       text-align: center;
+                   }
+                   
+                   /* === MODIFIED: Dynamic Widths === */
+                   .details-table th:nth-child(1),
+                   .details-table td:nth-child(1) { width: ${detailsColWidths[0]}%; }
+                   .details-table th:nth-child(2),
+                   .details-table td:nth-child(2) { width: ${detailsColWidths[1]}%; }
+                   .details-table th:nth-child(3),
+                   .details-table td:nth-child(3) { width: ${detailsColWidths[2]}%; }
+                   .details-table th:nth-child(4),
+                   .details-table td:nth-child(4) { width: ${detailsColWidths[3]}%; }
+
+                   .checklist-table th {
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table td {
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table th:nth-child(1),
+                   .checklist-table td:nth-child(1) { 
+                       width: ${checkColWidths[0]}%;
+                       text-align: center; 
+                   } 
+                   .checklist-table th:nth-child(2),
+                   .checklist-table td:nth-child(2) { 
+                       width: ${checkColWidths[1]}%; 
+                       text-align: center; /* MODIFIED */
+                   } 
+                   .checklist-table th:nth-child(3),
+                   .checklist-table td:nth-child(3) { 
+                       width: ${checkColWidths[2]}%; 
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table th:nth-child(4),
+                   .checklist-table td:nth-child(4) { 
+                       width: ${checkColWidths[3]}%;
+                       text-align: center; 
+                   }
+
+                   /* NEW: Styles for inputs to match preview */
+                   .word-table input[type="text"] {
+                       width: 95%;
+                       border: none;
+                       padding: 1px;
+                       font-family: 'Times New Roman', Times, serif;
+                       font-size: 10pt;
+                       background-color: #ffffff;
+                   }
+                   /* Style for the reference column inputs */
+                   .checklist-table input[type="text"] {
+                        border-bottom: 1px dotted #888;
+                   }
+                   .word-table input[type="checkbox"] {
+                       width: 16px;
+                       height: 16px;
+                       vertical-align: middle;
+                       margin: 0 auto;
+                       display: block;
+                   }
+               </style>
+           </head>
+               <body>
+                   ${content
+                       .replace('<table class="word-table w-full border-collapse border border-gray-400 mb-6 details-table">', '<table class="word-table details-table">')
+                       .replace('<table class="word-table w-full border-collapse border border-gray-400 checklist-table">', '<table class="word-table checklist-table">')
+                       .replace(/<table class="word-table w-full border-collapse border border-gray-400 mb-6">/g, '<table class="word-table">')
+                   }
+               </body>
+           </html>
+           `;
+
+           try {
+               const blob = new Blob([fullHtml], { type: 'text/html' }); 
+               const data = [new ClipboardItem({ 'text/html': blob })];
+               await navigator.clipboard.write(data);
+               
+               const button = getEl('copyDocsButton');
+               const originalText = button.textContent;
+               button.textContent = "Copied! Opening Docs...";
+               button.classList.remove('ios-button-secondary');
+               button.classList.add('ios-button'); 
+               
+               // --- NEW: Open Google Docs ---
+               window.open('https://docs.new', '_blank');
+
+               setTimeout(() => {
+                   button.textContent = originalText;
+                   button.classList.add('ios-button-secondary');
+                   button.classList.remove('ios-button');
+               }, 3000);
+
+           } catch (err) {
+               console.error('Failed to copy HTML to clipboard:', err);
+               showError("Failed to copy for Docs. See console for details.");
+           } finally {
+               showLoading(false);
+           }
+       }
+       // --- END NEW FUNCTION ---
+
+
+       // --- New Row Management Functions ---
+       
+       function createChecklistRow(item, index) {
+           const row = document.createElement('tr');
+           row.classList.add('checklist-row'); 
+           
+           const description = item.description || 'New Checklist Item (Click to Edit)';
+           const referenceText = item.reference || '';
+           
+           row.innerHTML = `
+               <td class="border border-gray-400 p-2 text-center row-number">${index + 1}</td>
+               <td class="border border-gray-400 p-2 editable-description" contenteditable="true">${description}</td>
+               <td class="border border-gray-400 p-1">
+                   <input type="text" value="${referenceText}" class="w-full border-none p-1 focus:ring-1 focus:ring-blue-500 rounded text-xs" placeholder="Add ref text or URL...">
+               </td>
+               <td class="border border-gray-400 p-2 text-center">
+                   <input type="checkbox" class="h-5 w-5 rounded border-gray-400 text-blue-500 focus:ring-blue-500">
+               </td>
+               <td class="border border-gray-400 p-1 w-10 text-center">
+                   <button class="remove-row-button text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove Row">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                       </svg>
+                   </button>
+               </td>
+               <td class="border border-gray-400 p-1 w-10 text-center">
+                   <button class="add-row-below-button text-green-500 hover:text-green-700 p-1 rounded transition-colors" title="Add Row Below">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           <line x1="12" y1="5" x2="12" y2="19"></line>
+                           <line x1="5" y1="12" x2="19" y2="12"></line>
+                       </svg>
+                   </button>
+               </td>
+           `;
+           
+           row.querySelector('.remove-row-button').addEventListener('click', () => removeRow(row));
+           row.querySelector('.add-row-below-button').addEventListener('click', () => addRow(row));
+
+           return row;
+       }
+
+       function updateRowNumbers() {
+           const rows = preview.body.querySelectorAll('.checklist-row');
+           rows.forEach((row, index) => {
+               const numberCell = row.querySelector('.row-number');
+               if (numberCell) {
+                   numberCell.textContent = index + 1;
+               }
+           });
+       }
+
+       function addRow(currentRow = null) {
+           const placeholder = preview.body.querySelector('.placeholder-row');
+           if (placeholder) {
+               placeholder.remove();
+           }
+           
+           const newRow = createChecklistRow({ description: '', reference: '' }, 0); 
+           
+           if (currentRow && currentRow.classList.contains('checklist-row')) {
+               currentRow.after(newRow);
+           } else {
+               preview.body.appendChild(newRow);
+           }
+
+           updateRowNumbers();
+       }
+
+       function removeRow(rowElement) {
+           rowElement.remove();
+           updateRowNumbers();
+
+           if (preview.body.querySelectorAll('.checklist-row').length === 0) {
+               preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>Checklist items will be generated here, or click the (+) icon to manually insert one.</i>
+                       </td>
+                   </tr>
+               `;
+           }
+       }
+
+       // --- End New Row Management Functions ---
+
+
+       async function generateChecklist() {
+           const { title, category, machineModel, machineSerial, instrumentModel, instrumentSerial, description } = Object.fromEntries(
+               Object.entries(inputs).map(([key, el]) => [key, el.value])
+           );
+           
+           const apiKey = inputs.apiKey.value.trim() || "AIzaSyCUDhfkmgZAKRSPCBTLZcoLnTWecW-DmkQ"; 
+
+           if (!title || !description) {
+               preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>Please fill in Title, and Description & Objective to generate items.</i>
+                       </td>
+                   </tr>
+               `;
+               return;
+           }
+
+           showLoading(true);
+           showError(null);
+
+           const systemPrompt = `You are an AI assistant specialized in creating highly detailed checklists for engineering tasks.
+Your task is to generate a list of checklist items. 
+Each item must be a concise, direct, and actionable instruction. Avoid filler words or long sentences. Focus on specific technical actions. 
+For example, instead of 'The operator should check if the coolant level is correct', write 'Verify coolant level is between MIN and MAX marks.'
+Break down complex tasks into multiple specific sub-steps.
+You MUST respond with ONLY a valid JSON array of objects. Each object must have two keys:
+1. 'description': A string containing the detailed, concise checklist item.
+2. 'reference': An empty string "". This column is for the user to fill out.
+Do not include any other text, pre-amble, or explanation. Generate at least 15 detailed items.`;
+
+           const userQuery = `Title: ${title}
+Category: ${category}
+Machine Model: ${machineModel}
+Machine Serial No.: ${machineSerial}
+Instrument Model: ${instrumentModel}
+Instrument Serial No.: ${instrumentSerial}
+Description & Objective: ${description}
+
+Generate the detailed JSON checklist items.`;
+
+           const payload = {
+               contents: [{ parts: [{ text: userQuery }] }],
+               systemInstruction: {
+                   parts: [{ text: systemPrompt }]
+               },
+               generationConfig: {
+                   responseMimeType: "application/json", 
+                   responseSchema: {
+                       type: "ARRAY",
+                       items: {
+                           type: "OBJECT",
+                           properties: {
+                               "description": { "type": "STRING" },
+                               "reference": { "type": "STRING" }
+                           },
+                           required: ["description", "reference"]
+                       }
+                   }
+               }
+           };
+
+           // --- AUTO-SWITCHING MODEL LOGIC ---
+           let success = false;
+           let lastErrorMsg = "";
+
+           for (const model of GEMINI_MODELS) {
+               preview.modelStatus.textContent = `Trying model: ${model}...`;
+               console.log(`Attempting to generate with model: ${model}`);
+
+               const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+               try {
+                   let response;
+                   // Simple retry for network glitches on the CURRENT model
+                   let delay = 1000;
+                   let retries = 2; // Reduced internal retries to fail faster to next model
+                   
+                   for (let i = 0; i <= retries; i++) {
+                       response = await fetch(apiUrl, {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json' },
+                           body: JSON.stringify(payload)
+                       });
+
+                       if (response.ok) break;
+                       
+                       // If 404 (Model not found) or 400 (Bad Request - likely model issue), fail immediately to next model
+                       if (response.status === 404 || response.status === 400) {
+                            const errorBody = await response.json().catch(() => ({}));
+                            // If it's specifically an invalid API key, stop everything.
+                            if (errorBody.error?.message?.includes("API key not valid")) {
+                                throw new Error("Invalid API Key");
+                            }
+                            // Otherwise break internal loop to go to next model in outer loop
+                            break;
+                       }
+
+                       if (response.status === 429 || response.status >= 500) {
+                           await new Promise(resolve => setTimeout(resolve, delay));
+                           delay *= 2;
+                       } else {
+                           break; // Other errors, probably shouldn't retry same model
+                       }
+                   }
+
+                   if (!response || !response.ok) {
+                       const err = await response.json().catch(() => ({ error: { message: response.statusText } }));
+                       console.warn(`Model ${model} failed:`, err);
+                       lastErrorMsg = err.error?.message || `Status ${response.status}`;
+                       if (lastErrorMsg.includes("Invalid API Key")) throw new Error("Invalid API Key");
+                       continue; // Try next model
+                   }
+
+                   const result = await response.json();
+                   const parts = result.candidates?.[0]?.content?.parts;
+                   if (!parts || !parts[0]?.text) {
+                       throw new Error("Invalid response structure.");
+                   }
+
+                   const checklistItems = JSON.parse(parts[0].text);
+                   renderChecklist(checklistItems);
+                   success = true;
+                   preview.modelStatus.textContent = `Generated using ${model}`;
+                   break; // Success! Exit loop.
+
+               } catch (error) {
+                   console.error(`Error with model ${model}:`, error);
+                   lastErrorMsg = error.message;
+                   if (error.message === "Invalid API Key") break; // Stop trying other models if key is wrong
+               }
+           }
+
+           if (!success) {
+               showError(`Failed to generate checklist. Last error: ${lastErrorMsg}`);
+               preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center text-red-500" colspan="6">
+                           Error generating items. Click the (+) icon on a row to manually insert one.
+                       </td>
+                   </tr>
+               `;
+           }
+           showLoading(false);
+       }
+
+       function renderChecklist(items) {
+           if (!items || items.length === 0) {
+                preview.body.innerHTML = `
+                   <tr class="placeholder-row">
+                       <td class="border border-gray-400 p-2 text-center" colspan="6" style="color: #666;">
+                           <i>Checklist items will be generated here, or click the (+) icon to manually insert one.</i>
+                       </td>
+                   </tr>
+               `;
+               return;
+           }
+
+           preview.body.innerHTML = ''; 
+           items.forEach((item, index) => {
+               const row = createChecklistRow(item, index);
+               preview.body.appendChild(row);
+           });
+           updateRowNumbers();
+       }
+
+       async function exportToWord() {
+           showLoading(true);
+           showError(null); 
+           
+           let logoBase64 = localStorage.getItem('vitroxLogoBase64');
+           
+           if (!logoBase64) {
+               showError("Logo not loaded. Please click 'Load Logo' before exporting.");
+               console.warn("Exporting without logo because it was not loaded by the user.");
+           }
+           
+           // === Get Dynamic Column Widths ===
+           const detailsTable = preview.content.querySelector('.details-table');
+           const detailsCells = detailsTable.querySelectorAll('tr:first-child > *');
+           const detailsTableWidth = detailsTable.offsetWidth;
+           const detailsColWidths = Array.from(detailsCells).map(cell => (cell.offsetWidth / detailsTableWidth) * 100);
+
+           const checklistTable = preview.content.querySelector('.checklist-table');
+           const checklistThs = checklistTable.querySelectorAll('thead th');
+           const checklistTableWidth = checklistTable.offsetWidth;
+           const checkColWidths = Array.from(checklistThs).map(th => (th.offsetWidth / checklistTableWidth) * 100);
+           // === END ===
+
+           const tempDiv = document.createElement('div');
+           tempDiv.innerHTML = preview.content.innerHTML;
+
+           // MODIFICATION: Handle logo presence and address alignment
+           const img = tempDiv.querySelector('#logo-preview');
+           const logoWrapper = tempDiv.querySelector('#logo-wrapper');
+           
+           if (img && logoWrapper) {
+               if (logoBase64) {
+                   img.src = logoBase64; 
+                   img.style.width = "130px";
+                   img.style.height = "auto";
+                   img.style.display = 'block'; 
+               } else {
+                   // If no logo, just remove the logo wrapper cell
+                   logoWrapper.remove(); 
+                   
+                   // Find the remaining address cell and make it full width/centered
+                   const addressCell = tempDiv.querySelector('.word-header-table td');
+                   if (addressCell) {
+                       addressCell.style.width = "80%";
+                       addressCell.style.textAlign = "center";
+                       addressCell.setAttribute('colspan', '0.5');
+                   }
+               }
+           }
+           // --- End Logo/Header Logic ---
+
+
+           // --- Clean up the table structure for export ---
+           const tableBody = tempDiv.querySelector('#checklist-body');
+           const tableHeaderRow = tempDiv.querySelector('.word-table thead tr');
+
+           if (tableHeaderRow) {
+               const headerCells = tableHeaderRow.querySelectorAll('th');
+               if (headerCells.length >= 6) { 
+                   headerCells[5].remove(); 
+                   headerCells[4].remove(); 
+               }
+           }
+
+           const tempDescriptions = tempDiv.querySelectorAll('.editable-description');
+           tempDescriptions.forEach((cell) => {
+               cell.removeAttribute('contenteditable');
+               cell.classList.remove('editable-description'); 
+           });
+           // Remove editable from headers too
+           tempDiv.querySelectorAll('.editable-header').forEach((cell) => {
+               cell.removeAttribute('contenteditable');
+               cell.classList.remove('editable-header');
+           });
+
+           const rows = tableBody.querySelectorAll('tr');
+           rows.forEach(row => {
+               const cells = row.querySelectorAll('td');
+               if (cells.length === 6) { 
+                   cells[5].remove(); 
+                   cells[4].remove(); 
+               }
+               if (row.classList.contains('placeholder-row')) {
+                   const placeholderCell = row.querySelector('td');
+                   if(placeholderCell) placeholderCell.setAttribute('colspan', '4'); 
+               }
+           });
+
+           // MODIFIED: Replace checkboxes with a div
+           const tempCheckboxes = tempDiv.querySelectorAll('input[type="checkbox"]');
+           tempCheckboxes.forEach((cb) => {
+               cb.parentElement.innerHTML = '<div class="word-checkbox"></div>';
+           });
+
+           const originalInputs = preview.content.querySelectorAll('.word-table input[type="text"]');
+           const tempInputs = tempDiv.querySelectorAll('.word-table input[type="text"]');
+
+           originalInputs.forEach((input, index) => {
+               if (tempInputs[index]) {
+                   const text = input.value.replace(/</g, "<").replace(/>/g, ">") || ''; 
+                   tempInputs[index].parentElement.innerHTML = `<div class="word-comment-box">${text}</div>`;
+               }
+           });
+           
+           const content = tempDiv.innerHTML;
+
+           //
+           // === THIS IS THE CRITICAL FIX ===
+           // All changes (Times New Roman, 11pt, line-height, black color) are applied
+           // to this <style> block that gets embedded in the Word doc.
+           //
+           const fullHtml = `
+           <!DOCTYPE html>
+           <html>
+           <head>
+               <meta charset="UTF-8">
+               <title>${inputs.title.value || 'Checklist'}</title>
+               <style>
+                   @page {
+                       size: 8.5in 11in;
+                       /* MODIFICATION: Changed margin to 0.15in */
+                       margin: 0.05in; 
+                   }
+                   body {
+                       font-family: 'Times New Roman', Times, serif; /* CHANGED */
+                       color: #000000; /* CHANGED */
+                       /* MODIFICATION: Changed width to 8.2in */
+                       width: 8.2in; 
+                       margin: 0 auto;
+                   }
+                   .word-header-table, .word-footer-table, .word-table {
+                       width: 100%;
+                       border-collapse: collapse;
+                       font-family: 'Times New Roman', Times, serif; /* CHANGED */
+                   }
+                   .word-header-table, .word-footer-table {
+                       border: none;
+                       font-size: 11pt; /* CHANGED */
+                   }
+                   
+                   .word-header-table { 
+                       margin-bottom: 20px; 
+                       line-height: 1.2; /* ADDED */
+                   }
+                   .word-footer-table { 
+                       margin-top: 30px; 
+                       font-size: 10pt; /* Keep footer signature small */
+                   }
+                   /* MODIFICATION: Added single line-height for signatures */
+                   .word-footer-table td {
+                       line-height: 1.2;
+                   }
+                   .word-table {
+                       font-size: 11pt;
+                   }
+                   .word-table th, .word-table td {
+                       border: 1px solid #000000;
+                       padding: 0.05in;
+                       vertical-align: middle;
+                       text-align: center; /* MODIFIED */
+                   }
+                   .word-table th {
+                       background-color: #f0f0f0;
+                       font-weight: bold;
+                       text-align: center; /* MODIFIED: Center all headers */
+                   }
+                   .word-title {
+                       font-size: 16pt;
+                       font-weight: bold;
+                       margin-bottom: 20px;
+                       text-align: center; 
+                   }
+                   
+                   /* MODIFICATION: Added/updated padding for details table */
+                   .details-table th, .details-table td {
+                       padding: 0.15in; 
+                       text-align: center;
+                   }
+                   
+                   /* === MODIFIED: Dynamic Widths === */
+                   .details-table th:nth-child(1),
+                   .details-table td:nth-child(1) { width: ${detailsColWidths[0]}%; }
+                   .details-table th:nth-child(2),
+                   .details-table td:nth-child(2) { width: ${detailsColWidths[1]}%; }
+                   .details-table th:nth-child(3),
+                   .details-table td:nth-child(3) { width: ${detailsColWidths[2]}%; }
+                   .details-table th:nth-child(4),
+                   .details-table td:nth-child(4) { width: ${detailsColWidths[3]}%; }
+
+                   .checklist-table th {
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table td {
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table th:nth-child(1),
+                   .checklist-table td:nth-child(1) { 
+                       width: ${checkColWidths[0]}%;
+                       text-align: center; 
+                   } 
+                   .checklist-table th:nth-child(2),
+                   .checklist-table td:nth-child(2) { 
+                       width: ${checkColWidths[1]}%; 
+                       text-align: center; /* MODIFIED */
+                   } 
+                   .checklist-table th:nth-child(3),
+                   .checklist-table td:nth-child(3) { 
+                       width: ${checkColWidths[2]}%; 
+                       text-align: center; /* MODIFIED */
+                   }
+                   .checklist-table th:nth-child(4),
+                   .checklist-table td:nth-child(4) { 
+                       width: ${checkColWidths[3]}%;
+                       text-align: center; 
+                   }
+
+                   .word-checkbox {
+                       width: 16px;
+                       height: 16px;
+                       border: 1px solid #000;
+                       display: inline-block;
+                       vertical-align: middle;
+                       margin-left: auto;
+                       margin-right: auto;
+                   }
+                   .word-comment-box {
+                       width: 95%;
+                       min-height: 40px; 
+                       border: 1px dotted #888;
+                       padding: 2px;
+                       text-align: left; 
+                       vertical-align: top;
+                       word-wrap: break-word;
+                   }
+               </style>
+           </head>
+               <body>
+                   ${content
+                       .replace('<table class="word-table w-full border-collapse border border-gray-400 mb-6 details-table">', '<table class="word-table details-table">')
+                       .replace('<table class="word-table w-full border-collapse border border-gray-400 checklist-table">', '<table class="word-table checklist-table">')
+                       .replace(/<table class="word-table w-full border-collapse border border-gray-400 mb-6">/g, '<table class="word-table">')
+                   }
+               </body>
+           </html>
+           `;
+
+           const blob = new Blob([fullHtml], { type: 'application/msword' });
+           saveAs(blob, `${inputs.title.value || 'checklist'}.doc`);
+           
+           showLoading(false);
+       }
+
+       function showLoading(isLoading) {
+           statusElements.loading.classList.toggle('hidden', !isLoading);
+           if (!isLoading) {
+                preview.modelStatus.textContent = "Generating...";
+           }
+       }
+
+       function showError(message) {
+           if (message) {
+               statusElements.error.textContent = message;
+               statusElements.error.classList.remove('hidden');
+           } else {
+               statusElements.error.classList.add('hidden');
+           }
+       }
+       
+       function init() {
+           // --- NEW: Set Theme Toggle State ---
+           try {
+               const theme = localStorage.getItem('theme');
+               if (theme === 'dark') {
+                   themeToggle.checked = true;
+               } else {
+                   themeToggle.checked = false;
+               }
+           } catch (e) {
+               console.warn('Could not access localStorage for theme.');
+           }
+           
+           // Try to load the logo from localStorage
+           try {
+               const savedLogo = localStorage.getItem('vitroxLogoBase64');
+               if (savedLogo) {
+                   preview.logo.src = savedLogo;
+                   preview.logo.style.display = 'block';
+                   preview.logoStatus.textContent = "Logo loaded from memory. You can change it if you like.";
+                   preview.logoStatus.style.color = 'green';
+                   buttons.loadLogoButton.textContent = 'Change Logo';
+                   buttons.clearLogoButton.style.display = 'inline-block';
+               } else {
+                   // No saved logo, show the default state
+                   preview.logoStatus.textContent = "Please load the logo to embed it in the export.";
+                   preview.logoStatus.style.color = '#6b7280'; // gray-500
+                   buttons.clearLogoButton.style.display = 'none';
+               }
+           } catch (error) {
+               console.error("Could not access localStorage: ", error);
+               preview.logoStatus.textContent = "Error: Could not access browser storage.";
+               preview.logoStatus.style.color = 'red';
+           }
+
+           // Initial title sync
+           handleInputChange();
+       }
+
+       init(); // Run the initialization function
+
+   </script>
+</body>
+</html>

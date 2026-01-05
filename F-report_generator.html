@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover"/>
+  <title>AI Report Generator</title>
+  <style>
+      :root {
+          --ios-blue: #007aff;
+          --ios-green: #34c759;
+          --ios-indigo: #5856d6;
+          --ios-red: #ff3b30;
+          --page-bg: #fff;
+          --page-bg-gradient: linear-gradient(180deg, #fff 0%, #fff 100%);
+          --ios-glass-bg: rgba(242, 242, 247, 0.7);
+          --ios-glass-border: rgba(0, 0, 0, 0.1);
+          --ios-input-bg: rgba(0, 0, 0, 0.05);
+          --ios-label-color-light: #000;
+          --ios-label-color-dark: #fff;
+      }
+      
+      html[data-theme="dark"] {
+          --page-bg: #000;
+          --page-bg-gradient: linear-gradient(180deg, #000 0%, #000 100%);
+          --ios-glass-bg: rgba(28, 28, 30, 0.7);
+          --ios-glass-border: rgba(255, 255, 255, 0.15);
+          --ios-input-bg: rgba(58, 58, 60, 0.5);
+      }
+      
+      body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          margin: 0; padding: 0;
+          background-color: var(--page-bg);
+          background-image: var(--page-bg-gradient);
+          color: var(--ios-label-color-light);
+          transition: background 0.3s ease, color 0.3s ease;
+          min-height: 100vh;
+      }
+
+      html[data-theme="dark"] body { color: var(--ios-label-color-dark); }
+
+      .container {
+          max-width: 900px;
+          margin: 0 auto;
+          padding: 20px;
+          padding-top: 80px;
+          padding-bottom: 100px;
+      }
+
+      .back-btn {
+          position: fixed; top: 20px; left: 20px; z-index: 100;
+          padding: 10px 20px; border-radius: 20px;
+          background: var(--ios-glass-bg);
+          border: 1px solid var(--ios-glass-border);
+          backdrop-filter: blur(20px);
+          color: var(--ios-blue); font-weight: 600; text-decoration: none;
+          font-size: 14px;
+      }
+
+      .theme-toggle-btn {
+          position: fixed; top: 20px; right: 20px; z-index: 100;
+          width: 40px; height: 40px; border-radius: 50%;
+          background: var(--ios-glass-bg);
+          border: 1px solid var(--ios-glass-border);
+          backdrop-filter: blur(20px);
+          cursor: pointer; display: flex; align-items: center; justify-content: center;
+          font-size: 20px; border: none;
+      }
+
+      .glass-panel {
+          background: var(--ios-glass-bg);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid var(--ios-glass-border);
+          border-radius: 24px;
+          padding: 32px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+          margin-bottom: 24px;
+      }
+
+      h2 { margin-top: 0; font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+      label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #8a8a8e; text-transform: uppercase; letter-spacing: 0.5px; }
+
+      input, textarea, select {
+          width: 100%;
+          padding: 16px;
+          border-radius: 12px;
+          border: 1px solid var(--ios-glass-border);
+          background: var(--ios-input-bg);
+          color: inherit;
+          font-family: inherit;
+          font-size: 16px;
+          margin-bottom: 24px;
+          box-sizing: border-box;
+          transition: all 0.2s;
+      }
+      
+      #proficiency, #templateSelect {
+          background-color: #000;
+          color: #fff;
+          border: 1px solid #333;
+      }
+
+      html[data-theme="dark"] #proficiency, html[data-theme="dark"] #templateSelect {
+          background-color: #fff;
+          color: #000;
+          border: 1px solid #ccc;
+      }
+      
+      input:focus, textarea:focus, select:focus {
+          outline: none; border-color: var(--ios-blue);
+          box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+          background: rgba(0,0,0,0.02);
+      }
+
+      .btn {
+          width: 100%;
+          padding: 16px;
+          border-radius: 14px;
+          border: none;
+          font-weight: 600;
+          font-size: 16px;
+          cursor: pointer;
+          transition: transform 0.1s, opacity 0.2s;
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          margin-bottom: 10px;
+      }
+      .btn:active { transform: scale(0.98); }
+      .btn-primary { background: var(--ios-blue); color: white; }
+      .btn-secondary { background: var(--ios-indigo); color: white; margin-top: -10px; margin-bottom: 20px; }
+      .btn-remove { 
+          background: var(--ios-red); color: white; 
+          padding: 8px 16px; width: auto; font-size: 13px; border-radius: 8px;
+          margin: 0;
+      }
+      
+      .export-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 15px;
+          margin-top: 20px;
+      }
+      .btn-word { background: #2b579a; color: white; }
+      .btn-docs { background: linear-gradient(45deg, #4285F4, #34A853, #FBBC05, #EA4335); color: white; border: none; }
+
+      #outputArea {
+          font-family: 'Times New Roman', Times, serif;
+          line-height: 1.4;
+          min-height: 600px;
+          font-size: 11pt; 
+          padding: 45px; 
+          background: white;
+          color: black;
+          border-radius: 12px;
+          border: 1px solid #ccc;
+          overflow-y: auto;
+          outline: none;
+      }
+      
+      #outputArea table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+      #outputArea td, #outputArea th { padding: 5px; vertical-align: top; }
+      
+      .logo-placeholder {
+          width: 150px; height: 60px;
+          border: 1px dashed #999;
+          background: #f9f9f9;
+          display: flex; align-items: center; justify-content: center;
+          color: #888; font-size: 10px; cursor: pointer;
+      }
+      .logo-img {
+          max-width: 180px;
+          max-height: 80px;
+          cursor: pointer;
+      }
+
+      .status-badge {
+          font-size: 12px; padding: 4px 8px; border-radius: 6px;
+          background: rgba(0,0,0,0.05); display: inline-block; margin-bottom: 10px;
+          font-weight: 600; color: var(--ios-blue);
+      }
+
+      .upload-zone {
+          border: 2px dashed var(--ios-glass-border);
+          padding: 15px; text-align: center;
+          border-radius: 12px; margin-bottom: 24px;
+          display: none; 
+          background: rgba(0,0,0,0.02);
+      }
+      
+      .file-info-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: var(--ios-glass-bg);
+          padding: 10px;
+          border-radius: 8px;
+          margin-top: 10px;
+          border: 1px solid var(--ios-glass-border);
+      }
+  </style>
+</head>
+<body>
+
+  <script>
+      // Session Check
+      if (!sessionStorage.getItem('cm_v7_session')) window.location.href = 'login.html';
+  </script>
+
+  <a href="home.html" class="back-btn">← Home</a>
+  <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  
+  <input type="file" id="logoLoader" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)">
+  <input type="file" id="templateLoader" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleTemplateUpload(this)">
+
+  <div class="container">
+      
+      <div class="glass-panel">
+          <h2>AI Report Generator</h2>
+          
+          <label>API Key (Optional)</label>
+          <input type="password" id="apiKey" placeholder="Leave Blank If Using Internal API Key">
+
+          <label>Select Template</label>
+          <select id="templateSelect" onchange="handleTemplateChange()">
+              <option value="standard">Standard Engineering Report</option>
+              <option value="lps">Copy of Vitrox AI Challenge LPS Report Template.pdf</option>
+              <option value="custom">Upload/Train Custom Template...</option>
+          </select>
+
+          <div id="customTemplateZone" class="upload-zone">
+              <p style="font-size:13px; margin-bottom:10px;">Upload a PDF or Doc to teach the AI a new format.</p>
+              
+              <button id="uploadBtn" class="btn btn-secondary" onclick="document.getElementById('templateLoader').click()">
+                  📂 Upload Template File
+              </button>
+
+              <div id="loadedFileRow" class="file-info-row" style="display:none;">
+                  <span id="templateFileName" style="font-size:13px; font-weight:600; color:var(--ios-blue);"></span>
+                  <button class="btn btn-remove" onclick="removeTemplate()">Remove ✕</button>
+              </div>
+          </div>
+
+          <label>1. Report Title / Subject</label>
+          <input type="text" id="reportTitle" placeholder="0.0" oninput="handleAutoGenerate()">
+
+          <label>2. Objective & Description</label>
+          <textarea id="reportDetails" rows="6" placeholder="0.0" oninput="handleAutoGenerate()"></textarea>
+
+          <label>Report Proficiency</label>
+          <select id="proficiency" onchange="handleAutoGenerate()">
+              <option value="standard">Standard (Moderate)</option>
+              <option value="simple">Simple (Shorter)</option>
+              <option value="expert">PRO (Longest)</option>
+          </select>
+
+          <button class="btn btn-primary" onclick="startGeneration()" id="generateBtn">
+              <span id="btnText">Generate Report</span>
+          </button>
+          
+          <div id="statusMsg" style="margin-top:15px; text-align:center; font-size:13px; color:#888;"></div>
+      </div>
+
+      <div class="glass-panel" id="resultPanel" style="display:none;">
+          <h2>Preview & Export</h2>
+          <div class="status-badge" id="modelUsedBadge">Model Used: --</div>
+          
+          <div id="outputArea" contenteditable="true"></div>
+          
+          <div class="export-grid">
+              <button class="btn btn-word" onclick="downloadWord()">
+                  🕸️ Download Word (.doc)
+              </button>
+              <button class="btn btn-docs" onclick="openInDocs()">
+                  🚪 Open in Google Docs
+              </button>
+          </div>
+          <p style="text-align: center; font-size: 12px; color: #888; margin-top: 10px;">
+              *For Google Docs: Formatted text is copied. Press Ctrl+V (Paste) when the new tab opens.
+          </p>
+      </div>
+
+  </div>
+
+  <script>
+      const MODELS = [
+          "gemini-3-pro",
+          "gemini-3-flash",
+          "gemini-3-flash-lite",
+          "gemini-3-flash-preview",
+          "gemini-2.5-pro",
+          "gemini-2.5-flash",
+          "gemini-2.5-flash-lite",
+          "gemini-2.0-pro",
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-lite",
+          "gemini-2.0-flash-exp", 
+          "gemini-1.5-pro",
+          "gemini-1.5-pro-002",
+          "gemini-1.5-flash",
+          "gemini-1.5-flash-lite",
+          "gemini-1.5-flash-8b",
+          "gemini-flash",
+          "gemini-1.0-pro"
+      ];
+
+      let customTemplateBase64 = null;
+      let customTemplateMimeType = null;
+      let lastErrorMsg = "";
+
+      function handleLogoUpload(input) {
+          if (input.files && input.files[0]) {
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                  const base64 = e.target.result;
+                  localStorage.setItem('vitrox_report_logo', base64);
+                  refreshLogo();
+              };
+              reader.readAsDataURL(input.files[0]);
+          }
+      }
+      
+      function refreshLogo() {
+           const savedLogo = localStorage.getItem('vitrox_report_logo');
+           const imgElement = document.getElementById('reportLogoImg');
+           const placeholder = document.getElementById('logoPlaceholder');
+           
+           if (imgElement && savedLogo) {
+              imgElement.src = savedLogo;
+              imgElement.style.display = 'block';
+              if(placeholder) placeholder.style.display = 'none';
+           }
+      }
+
+      function handleTemplateChange() {
+          const val = document.getElementById('templateSelect').value;
+          const zone = document.getElementById('customTemplateZone');
+          
+          if (val === 'custom') {
+              zone.style.display = 'block';
+          } else {
+              zone.style.display = 'none';
+          }
+          handleAutoGenerate();
+      }
+
+      function handleTemplateUpload(input) {
+          if (input.files && input.files[0]) {
+              const file = input.files[0];
+              document.getElementById('templateFileName').textContent = "Loaded: " + file.name;
+              document.getElementById('loadedFileRow').style.display = 'flex';
+              document.getElementById('uploadBtn').style.display = 'none';
+              
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                  const rawResult = e.target.result;
+                  customTemplateMimeType = rawResult.split(';')[0].split(':')[1];
+                  customTemplateBase64 = rawResult.split(',')[1];
+              };
+              reader.readAsDataURL(file);
+          }
+      }
+
+      function removeTemplate() {
+          customTemplateBase64 = null;
+          customTemplateMimeType = null;
+          document.getElementById('templateLoader').value = "";
+          document.getElementById('loadedFileRow').style.display = 'none';
+          document.getElementById('uploadBtn').style.display = 'flex';
+      }
+
+      function getHeaderHTML() {
+          const savedLogo = localStorage.getItem('vitrox_report_logo');
+          const logoDisplay = savedLogo ? 'block' : 'none';
+          const placeholderDisplay = savedLogo ? 'none' : 'flex';
+          const logoSrc = savedLogo ? savedLogo : '';
+
+          return `
+          <table style="width:100%; border-bottom: 2px solid #000; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 11pt;">
+              <tr>
+                  <td style="width:40%; vertical-align:top; padding-bottom:15px;">
+                      <div title="Click to Change Logo" onclick="document.getElementById('logoLoader').click()" style="cursor:pointer;">
+                          <div id="logoPlaceholder" style="width:120px; height:60px; border:1px dashed #999; background:#f9f9f9; display:${placeholderDisplay}; align-items:center; justify-content:center; color:#888; font-size:10px; margin-bottom:10px;">
+                              [CLICK TO UPLOAD LOGO]
+                          </div>
+                          <img id="reportLogoImg" src="${logoSrc}" style="display:${logoDisplay}; max-width:180px; max-height:80px; margin-bottom:10px;">
+                      </div>
+                  </td>
+                  <td style="width:60%; text-align:right; vertical-align:top; line-height:1.4;">
+                      <b>ViTrox Technologies Sdn. Bhd.</b><br>
+                      746, Persiaran Cassia Selatan 3<br>
+                      14110 Bandar Cassia, Pulau Pinang, Malaysia<br>
+                      Tel: (+604) 545 9988
+                  </td>
+              </tr>
+          </table>
+          `;
+      }
+
+      let debounceTimer;
+      
+      function handleAutoGenerate() {
+          const title = document.getElementById('reportTitle').value;
+          const details = document.getElementById('reportDetails').value;
+          const statusMsg = document.getElementById('statusMsg');
+
+          if (title.length < 3 || details.length < 5) return;
+
+          clearTimeout(debounceTimer);
+          statusMsg.textContent = "Waiting for typing to pause...";
+
+          debounceTimer = setTimeout(() => {
+              startGeneration(true); 
+          }, 1000); 
+      }
+
+      async function startGeneration(quietMode = false) {
+          const title = document.getElementById('reportTitle').value;
+          const details = document.getElementById('reportDetails').value;
+          const templateType = document.getElementById('templateSelect').value;
+          
+          if (!title || !details) {
+              if(!quietMode) alert("Please fill in both boxes.");
+              return;
+          }
+
+          const btn = document.getElementById('generateBtn');
+          const btnText = document.getElementById('btnText');
+          
+          if(!quietMode) {
+              btn.disabled = true;
+              btn.style.opacity = "0.7";
+              btnText.textContent = "Writing...";
+          } else {
+              document.getElementById('statusMsg').textContent = "Auto-generating report...";
+          }
+
+          const userKey = document.getElementById('apiKey').value.trim();
+          const internalKey = "AIzaSyAvkpmjzy7r1o2ou_AXZuY0WtyjnIgVbmI";
+          const apiKey = userKey ? userKey : internalKey;
+          const proficiency = document.getElementById('proficiency').value;
+          
+          let prompt = "";
+          let imageParts = null;
+          let useStandardHeader = true;
+
+          // --- UPDATED LPS LOGIC ---
+          // Changes: 
+          // 1. Reduced left/right space further (Width 99.5%, Padding 0px).
+          // 2. Removed all grey/italic description text instructions.
+          if (templateType === 'lps') {
+              useStandardHeader = false;
+              prompt = `
+              ROLE: Continuous Improvement Lead / AI Engineer.
+              TASK: Generate a ViTrox Quarterly AI Challenge LPS A3 Report based on the INPUT.
+              INPUT TITLE: ${title}
+              INPUT DETAILS: ${details}
+              
+              STRICT LAYOUT INSTRUCTION: 
+              1. Output RAW HTML only.
+              2. You must EXACTLY mimic the visual structure, colors (Light Blue Headers), and Table formats shown in the user's template.
+              3. For the Cost Saving table, maintain the exact rates: 110, 50, 25.
+              4. **ARRANGE THE "LPS A3 Report Section" BOXES VERTICALLY (1 down to 8) using TABLE structures for each.**
+              5. **ENSURE ALL TABLES HAVE VISIBLE BLACK BORDERS ON ALL SIDES AND CELLS.**
+              6. **The entire report content must be centered with equal margins on left and right, and TEXT MUST BE JUSTIFIED.**
+              7. **ALL FONTS MUST BE 'Times New Roman' AND SIZE 11pt.**
+              
+              OUTPUT HTML STRUCTURE:
+
+              <div style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; color:black; background:white; padding:0px; width:99.5%; margin: 0 auto; box-sizing:border-box; text-align: justify;">
+                  
+                  <div style="text-align:center; font-weight:bold; font-size:16pt; margin-bottom:20px;">
+                      LPS A3 Report<br>
+                      VITROX QUARTERLY AI CHALLENGE
+                  </div>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; font-size: 11pt;">
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 5px; width:20%; background-color:#f2f2f2;">Prepared by (BU-Dept)</td>
+                          <td style="border: 1px solid #000; padding: 5px; width:30%;"> (Generate Name/Dept) </td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 5px; background-color:#f2f2f2;">Prepared Date</td>
+                          <td style="border: 1px solid #000; padding: 5px;">${new Date().toLocaleDateString()}</td>
+                      </tr>
+                  </table>
+
+                  <div style="text-align:center; font-weight:bold; font-size:14pt; text-decoration:underline; margin-bottom:10px;">Project Summary</div>
+                  
+                  <table style="width:100%; border-collapse: collapse; border: 2px solid #000; margin-bottom: 25px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">Project Title*:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px;">${title}</td>
+                      </tr>
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">
+                              AI Tool & Short Description:
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px;">(Generate brief description...)</td>
+                      </tr>
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">
+                              Total Cost Saving Per Annum (RM) :
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px;">(Auto-Calculate based on table below)</td>
+                      </tr>
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">
+                              Video Link for Demonstrate Use Case (if any)
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; height:20px;"></td>
+                      </tr>
+                  </table>
+
+                  <hr style="border:1px solid #ccc; margin: 30px 0;">
+
+                  <br><br><br><br>
+                  <div style="text-align:center; font-weight:bold; font-size:16pt; text-decoration:underline; margin-bottom:15px;">LPS A3 Report Section</div>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">1. PROBLEM STATEMENT:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">2. CURRENT CONDITIONS:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">3. TARGET STATEMENT:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">4. ANALYSIS:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">5. PROPOSED COUNTERMEASURES:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">6. IMPLEMENTATION PLAN:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">7 & 8. EVALUATE RESULTS AND PROCESSES & STANDARDIZATION:</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 8px; vertical-align:top; min-height:80px;">
+                              (Content...)
+                          </td>
+                      </tr>
+                  </table>
+                  
+                  <br><br><br><br>
+
+                  <div style="font-weight:bold; font-size:16pt; text-decoration:underline; margin-bottom:5px;">
+                      Productivity Improvement & Cost Saving Section
+                  </div>
+                  <div style="background-color: #DDEBF7; font-weight:bold; font-size:11pt; padding:3px; display:inline-block; margin-bottom:5px;">
+                      Summary of the Calculation Per Annum:
+                  </div>
+
+                  <table style="width: 100%; border-collapse: collapse; font-size: 11pt; text-align: left; border: 1px solid #000;">
+                      <tr style="text-align:center; font-weight:bold;">
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px; width:15%;">Saving Area-1</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px; width:10%;">Level-Based Costing</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A)<br>Before (hrs)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(B)<br>After (hrs)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A-B)<br>Total Time Saving (hrs)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(C)<br>No of HC*</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(D)<br>cost per HC* (RM)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(E)=(CxD)*(A-B)<br>Total Saving (RM)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Sum of (E)<br>Overall Saving (RM)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Notes</td>
+                      </tr>
+                      
+                      <tr>
+                          <td rowspan="3" style="border: 1px solid #000; padding:4px;">Process Optimization / Automation<br>Labor</td>
+                          <td style="border: 1px solid #000; padding:4px;">MM</td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; text-align:center;">110</td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td rowspan="3" style="border: 1px solid #000;"></td>
+                          <td rowspan="3" style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding:4px;">EX/SE</td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; text-align:center;">50</td>
+                          <td style="border: 1px solid #000;"></td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding:4px;">NE</td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; text-align:center;">25</td>
+                          <td style="border: 1px solid #000;"></td>
+                      </tr>
+
+                      <tr style="text-align:center; font-weight:bold;">
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Saving Area- 2</td>
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A) Before (RM)</td>
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(B) After (RM)</td>
+                          <td colspan="3" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A-B) Total Saving (RM)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Notes</td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Material Saving</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+
+                      <tr style="text-align:center; font-weight:bold;">
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Saving Area- 3 (others)</td>
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A) Before (unit of measure)</td>
+                          <td colspan="2" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(B) After (unit of measure)</td>
+                          <td colspan="3" style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">(A-B) Total Saving (unit of measure)</td>
+                          <td style="background-color: #B4C7E7; border: 1px solid #000; padding: 4px;">Notes</td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Energy/Workplace Saving</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Predictive Maintenance</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Improved Decision-Making</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Fraud Detection</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Customer Service</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                      <tr>
+                          <td colspan="2" style="border: 1px solid #000; padding:4px;">Others (than above)</td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="2" style="border: 1px solid #000;"></td>
+                          <td colspan="3" style="border: 1px solid #000;"></td>
+                          <td style="border: 1px solid #000; padding:4px;"></td>
+                      </tr>
+                  </table>
+                  
+                  <table style="width:100%; border-collapse: collapse; border: 1px solid #000; margin-top: 20px; font-size: 11pt;">
+                      <tr>
+                          <td style="background-color: #E6F0FF; border: 1px solid #000; padding: 5px; font-weight: bold;">Application/ Maintenance Cost Per Annum, if any (RM) :</td>
+                      </tr>
+                      <tr>
+                          <td style="border: 1px solid #000; padding: 10px; min-height: 30px;">
+                              (List costs...)
+                          </td>
+                      </tr>
+                  </table>
+                  
+              </div>
+              `;
+          } 
+          // --- END UPDATED LPS LOGIC ---
+
+          else if (templateType === 'custom') {
+              if (!customTemplateBase64) {
+                  if(!quietMode) alert("Please upload a template file first for Custom Mode.");
+                  btn.disabled = false; btn.style.opacity = "1"; btnText.textContent = "Generate Report";
+                  return;
+              }
+              useStandardHeader = false;
+              prompt = `
+              TASK: Analyze the attached template file image/document.
+              GOAL: Generate a new report for Subject "${title}" with details "${details}".
+              INSTRUCTION: 
+              1. Strictly mimic the VISUAL STRUCTURE, TABLES, and HEADERS of the attached template.
+              2. Fill content based on user input.
+              3. Return ONLY RAW HTML.
+              `;
+              imageParts = [{
+                  inline_data: { mime_type: customTemplateMimeType, data: customTemplateBase64 }
+              }];
+          }
+          else {
+               let tone = "Professional Corporate Engineering Standard";
+              let lengthInstruction = "Standard professional reporting length (approx 600 words).";
+
+              if(proficiency === 'simple') {
+                  tone = "Simplified Technical";
+                  lengthInstruction = "Keep sections brief. Total length approx 300 words.";
+              }
+              if(proficiency === 'expert') {
+                  tone = "Deep Technical Root Cause Analysis";
+                  lengthInstruction = "Provide extensive details. Total length approx 1000+ words.";
+              }
+
+              let headerTitle = "REPORT";
+              if (title.toLowerCase().includes("maintain")) {
+                  headerTitle = "MAINTENANCE REPORT";
+              }
+
+              prompt = `
+              ROLE: Senior Engineering Manager.
+              TASK: Write a Formal Report.
+              TONE: ${tone}.
+              LENGTH: ${lengthInstruction}
+              INPUT: ${title} - ${details}
+              
+              OUTPUT FORMAT: RAW HTML only.
+              
+              STRUCTURE:
+              <div style="font-family:'Times New Roman', serif; margin-bottom:20px; font-size:11pt;">
+                  <h1 style="margin:0; font-size:20pt; text-transform:uppercase; text-align:center; text-decoration:underline;">${headerTitle}</h1>
+                  
+                  <table style="width:100%; margin-top:10px; border:1px solid #000; font-size:11pt; border-collapse: collapse;">
+                      <tr>
+                          <td style="border:1px solid #000; padding:2px; width:15%; line-height:1.2;"><b>Date:</b></td>
+                          <td style="border:1px solid #000; padding:2px; line-height:1.2;">${new Date().toLocaleDateString()}</td>
+                          <td style="border:1px solid #000; padding:2px; width:15%; line-height:1.2;"><b>Ref No:</b></td>
+                          <td style="border:1px solid #000; padding:2px; line-height:1.2;">SR-${Math.floor(1000 + Math.random() * 9000)}</td>
+                      </tr>
+                      <tr>
+                          <td style="border:1px solid #000; padding:2px; line-height:1.2;"><b>Subject:</b></td>
+                          <td colspan="3" style="border:1px solid #000; padding:2px; line-height:1.2;">${title}</td>
+                      </tr>
+                  </table>
+              </div>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">1.0 Executive Summary</h3>
+              <p style="font-size:11pt;">(Summary here)</p>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">2.0 Fault Description</h3>
+              <p style="font-size:11pt;">(Details here)</p>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">3.0 Diagnostic Actions</h3>
+              <ul style="font-size:11pt;">
+                  <li>(Action 1)</li>
+              </ul>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">4.0 Root Cause Analysis (RCA)</h3>
+              <p style="font-size:11pt;">(Analysis here)</p>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">5.0 Correction & Validation</h3>
+              <p style="font-size:11pt;">(Fix details here)</p>
+
+              <h3 style="background:#eee; padding:5px; border-left:4px solid #000; margin-top:20px; text-transform:uppercase; font-size:14pt;">6.0 Recommendations</h3>
+              <p style="font-size:11pt;">(Future advice)</p>
+              `;
+          }
+
+          lastErrorMsg = ""; 
+          await tryModel(0, apiKey, prompt, quietMode, imageParts, useStandardHeader);
+
+          btn.disabled = false;
+          btn.style.opacity = "1";
+          btnText.textContent = "Generate Report";
+      }
+
+      async function tryModel(index, key, prompt, quietMode, imageParts, useStandardHeader) {
+          const statusMsg = document.getElementById('statusMsg');
+          
+          if (index >= MODELS.length) {
+              statusMsg.textContent = "Error: All models failed.";
+              if(!quietMode) alert("Generation Failed.\n\nReason: " + lastErrorMsg + "\n\n(Check your API Key and ensure it supports the selected models)");
+              return;
+          }
+
+          const currentModel = MODELS[index];
+          if(!quietMode) statusMsg.textContent = `Optimizing: ${currentModel} (Attempt ${index+1})...`;
+
+          try {
+              const requestBody = {
+                  contents: [{
+                      role: "user", 
+                      parts: [ { text: prompt } ]
+                  }],
+                  safetySettings: [
+                      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                  ]
+              };
+
+              if (imageParts) {
+                  requestBody.contents[0].parts.push(imageParts[0]);
+              }
+
+              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${key}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(requestBody)
+              });
+
+              const data = await response.json();
+              
+              if (data.error) {
+                  throw new Error(data.error.message);
+              }
+
+              if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                  throw new Error("No content generated (Safety Block or Empty Response).");
+              }
+
+              let resultText = data.candidates[0].content.parts[0].text;
+              resultText = resultText.replace(/```html/g, '').replace(/```/g, '');
+              resultText = resultText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+              const header = useStandardHeader ? getHeaderHTML() : "";
+              const fullReportHTML = header + resultText;
+
+              document.getElementById('outputArea').innerHTML = fullReportHTML;
+              document.getElementById('modelUsedBadge').textContent = `Generated using: ${currentModel}`;
+              statusMsg.textContent = "Report Generated Successfully.";
+
+              const resultPanel = document.getElementById('resultPanel');
+              if (resultPanel.style.display === 'none') {
+                  resultPanel.style.display = 'block';
+                  if(!quietMode) resultPanel.scrollIntoView({ behavior: 'smooth' });
+              }
+
+          } catch (error) {
+              console.warn(`Model ${currentModel} failed: ${error.message}`);
+              lastErrorMsg = error.message; 
+              await tryModel(index + 1, key, prompt, quietMode, imageParts, useStandardHeader);
+          }
+      }
+
+      function downloadWord() {
+          const content = document.getElementById('outputArea').innerHTML;
+          const title = document.getElementById('reportTitle').value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+          
+          const htmlContent = `
+              <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+              <head><meta charset='utf-8'><title>Report</title></head>
+              <body style="font-family: 'Times New Roman', serif; font-size: 11pt;">
+              ${content}
+              </body></html>
+          `;
+          
+          const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Report_${title}.doc`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
+
+      function openInDocs() {
+          const contentDiv = document.getElementById('outputArea');
+          contentDiv.focus();
+          const range = document.createRange();
+          range.selectNodeContents(contentDiv);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          try {
+              document.execCommand('copy');
+              alert("Formatted Report copied! \n\nOpening Google Docs...\nPress Ctrl+V (Paste) immediately.");
+              window.open("https://docs.new", "_blank");
+          } catch (err) {
+              alert("Clipboard access denied. Please manually copy the text.");
+          }
+          selection.removeAllRanges();
+      }
+
+      function toggleTheme() {
+          const html = document.documentElement;
+          const current = html.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          html.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateThemeIcon(next);
+      }
+
+      function updateThemeIcon(theme) {
+          const btn = document.getElementById('themeBtn');
+          if(btn) btn.innerText = theme === 'dark' ? '⚪️' : '⚫️';
+      }
+
+      const initialTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', initialTheme);
+      updateThemeIcon(initialTheme);
+  </script>
+</body>
+</html>

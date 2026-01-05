@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Log Settings - Cable Management System</title>
+    <style>
+        :root {
+            --ios-blue: #007aff;
+            --ios-red: #ff3b30;
+            --ios-gray: #f2f2f7;
+            --ios-gray-dark: #1c1c1e;
+            --ios-label-color-light: #fff;
+            --ios-label-color-dark: #000;
+            
+            /* --- MODIFIED: Light Mode UI --- */
+            --page-bg: #fff; /* Plain white */
+            --body-color: var(--ios-label-color-dark); /* Black text */
+            --ios-glass-bg: rgba(248, 248, 248, 0.85); /* Slightly opaque light glass */
+            --ios-glass-border: rgba(0, 0, 0, 0.08);
+            --ios-input-bg: rgba(0, 0, 0, 0.05);
+            --back-btn-bg: rgba(255,255,255,0.8);
+            --back-btn-color: #333;
+            --theme-toggle-bg: rgba(255,255,255,0.8);
+            --theme-toggle-color: #333;
+            --btn-ghost-bg: rgba(0, 0, 0, 0.05);
+            --btn-ghost-color: #000;
+            --btn-ghost-border: 1px solid rgba(0, 0, 0, 0.1);
+
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+        }
+        
+        /* === MODIFIED: Use data-theme for dark mode === */
+        html[data-theme="dark"] {
+            /* --- MODIFIED: Dark Mode UI --- */
+            --page-bg: #000; /* Plain black */
+            --body-color: var(--ios-label-color-light); /* White text */
+            --ios-glass-bg: rgba(28, 28, 30, 0.85); /* Slightly opaque dark glass */
+            --ios-glass-border: rgba(255, 255, 255, 0.15);
+            --ios-input-bg: rgba(58, 58, 60, 0.5);
+            --back-btn-bg: rgba(28, 28, 30, 0.8);
+            --back-btn-color: #fff;
+            --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+            --theme-toggle-color: #fff;
+            --btn-ghost-bg: rgba(255, 255, 255, 0.1);
+            --btn-ghost-color: #fff;
+            --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Fallback for first load (Kept for compatibility) */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --page-bg: #000;
+                --body-color: var(--ios-label-color-light); 
+                --ios-glass-bg: rgba(28, 28, 30, 0.85);
+                --ios-glass-border: rgba(255, 255, 255, 0.15);
+                --ios-input-bg: rgba(58, 58, 60, 0.5);
+                --back-btn-bg: rgba(28, 28, 30, 0.8);
+                --back-btn-color: #fff;
+                --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+                --theme-toggle-color: #fff;
+                --btn-ghost-bg: rgba(255, 255, 255, 0.1);
+                --btn-ghost-color: #fff;
+                --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.2);
+                --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+                --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+            }
+        }
+        
+        /* --- 1. Base & Fonts --- */
+        html { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--page-bg);
+            color: var(--body-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        /* --- 2. Page Layout & Animations --- */
+        .app-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        .page-container {
+            padding-top: 80px; /* Space for fixed buttons */
+            padding-bottom: 60px;
+        }
+        @keyframes page-enter-animation {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-enter {
+            animation: page-enter-animation 0.4s ease-out;
+        }
+
+        /* --- 3. Header & Back Button --- */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            font-size: 24px;
+            font-weight: 400; 
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            cursor: pointer;
+            background: var(--back-btn-bg);
+            color: var(--back-btn-color);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-btn:hover { 
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            background: var(--theme-toggle-bg);
+            color: var(--theme-toggle-color);
+            box-shadow: var(--shadow-main);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+         .theme-toggle:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle .icon-sun,
+        .theme-toggle .icon-moon {
+            font-size: 20px; 
+            color: var(--theme-toggle-color);
+        }
+        html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+        html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 16px;
+        }
+        .topbar-left {
+            flex-grow: 1;
+        }
+        .topbar-right {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .topbar .h1 {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .topbar .h2 {
+            font-size: 17px;
+            font-weight: 400;
+            color: #8a8a8e;
+            margin: 4px 0 0 0;
+        }
+
+        /* --- 4. Log Panel (Themed) --- */
+        .log-panel {
+            background: var(--ios-glass-bg);
+            border: 1px solid var(--ios-glass-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow-main);
+            transition: all 0.3s ease;
+        }
+        
+        .log-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--ios-glass-border);
+            transition: background 0.2s ease;
+        }
+        .log-item:last-child { border-bottom: none; }
+        .log-item:hover { background: rgba(0,0,0,0.03); }
+        html[data-theme="dark"] .log-item:hover { background: rgba(255,255,255,0.05); }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .log-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .log-time {
+            font-size: 13px;
+            color: #8a8a8e;
+            white-space: nowrap;
+        }
+        .log-desc {
+            font-size: 14px;
+            color: #8a8a8e;
+            margin: 4px 0 0 0;
+        }
+        
+        /* --- 5. Form Elements (Themed) --- */
+        .input {
+            width: 100%;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            padding: 12px;
+            border: 1px solid var(--ios-glass-border);
+            border-radius: 8px;
+            background: var(--ios-input-bg);
+            color: var(--body-color);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main);
+        }
+        .input::placeholder { color: #8a8a8e; }
+        .input:focus {
+            outline: none;
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+
+        .btn {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main);
+            white-space: nowrap;
+        }
+        .btn:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        .btn:active { 
+            transform: scale(0.96);
+            box-shadow: var(--shadow-main);
+        }
+        .btn.primary {
+            background-color: var(--ios-blue);
+            color: white;
+        }
+        .btn.ghost {
+            background-color: var(--btn-ghost-bg);
+            color: var(--btn-ghost-color);
+            border: var(--btn-ghost-border);
+        }
+        .btn.danger {
+            background-color: var(--ios-red);
+            color: white;
+        }
+        
+        /* === Modal Fix === */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: var(--ios-glass-bg);
+            border: 1px solid var(--ios-glass-border);
+            box-shadow: var(--shadow-hover);
+            border-radius: var(--radius-lg);
+            z-index: 2001;
+            width: 90%;
+            max-width: 500px;
+            padding: 24px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal .h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            color: var(--body-color);
+        }
+        .modal .small {
+            font-size: 15px;
+            color: #8a8a8e;
+            margin-bottom: 16px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        textarea.input {
+            height: 80px;
+            resize: vertical;
+        }
+    </style>
+</head>
+
+<script>
+    if (!sessionStorage.getItem('cm_v7_session')) window.location.href = 'login.html';
+</script>
+
+<body class="page-container">
+    <button id="themeToggle" class="theme-toggle">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+    </button>
+
+    <button class="back-btn" onclick="goBack()">‹</button>
+
+    <div class="app-wrap">
+        <div class="topbar page-enter">
+            <div class="topbar-left">
+                <h1 class="h1">Log Settings</h1>
+                <div class="h2">Manage and edit log entries</div>
+            </div>
+            <div class="topbar-right">
+                <button class="btn ghost" onclick="location.href='F-Log Record System.html'">← Back to Logs</button>
+            </div>
+        </div>
+
+        <div id="listArea" class="log-panel page-enter">
+            </div>
+    </div>
+
+    <script>
+        // ===== LOG MANAGEMENT FUNCTIONS =====
+        
+        // Session management
+        function requireSession() {
+            const session = sessionStorage.getItem('cm_v7_session');
+            // return session !== null && session !== undefined;
+            return true; // DEBUG: Force true. Change this back.
+        }
+
+        // Log management functions
+        function loadLogs() {
+            try {
+                const logs = localStorage.getItem('cm_v7_logs');
+                return logs ? JSON.parse(logs) : [];
+            } catch (e) {
+                console.error('Error loading logs:', e);
+                return [];
+            }
+        }
+
+        function saveLogs(logs) {
+            try {
+                localStorage.setItem('cm_v7_logs', JSON.stringify(logs));
+                return true;
+            } catch (e) {
+                console.error('Error saving logs:', e);
+                return false;
+            }
+        }
+
+        function editLog(id, title, description) {
+            const logs = loadLogs();
+            const logIndex = logs.findIndex(log => log.id === id);
+            if (logIndex !== -1) {
+                logs[logIndex].title = title;
+                logs[logIndex].desc = description;
+                logs[logIndex].time = new Date().toLocaleString(); // Update timestamp
+                const success = saveLogs(logs);
+                if (success) {
+                    showNotification('✓ Log updated successfully');
+                } else {
+                    showNotification('❌ Failed to update log', true);
+                }
+                return success;
+            }
+            return false;
+        }
+
+        function removeLog(id) {
+            const logs = loadLogs();
+            const updatedLogs = logs.filter(log => log.id !== id);
+            const success = saveLogs(updatedLogs);
+            if (success) {
+                showNotification('✓ Log removed successfully');
+            } else {
+                showNotification('❌ Failed to remove log', true);
+            }
+            return success;
+        }
+
+        // === FIXED: Replaced showModal with the version from F-Log... ===
+        function showModal(content) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = content;
+            
+            document.body.appendChild(backdrop);
+            document.body.appendChild(modal);
+            
+            // Trigger transition
+            setTimeout(() => {
+                backdrop.style.opacity = '1';
+                modal.style.opacity = '1';
+                modal.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 10);
+            
+            const close = () => {
+                backdrop.style.opacity = '0';
+                modal.style.opacity = '0';
+                modal.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                setTimeout(() => {
+                    backdrop.remove();
+                    modal.remove();
+                }, 300);
+            };
+            
+            return { modal, close };
+        }
+
+        // === FIXED: Replaced showNotification to use new CSS variables ===
+        function showNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${isError ? 'var(--ios-red)' : 'var(--ios-glass-bg)'};
+                border: 1px solid var(--ios-glass-border);
+                backdrop-filter: blur(20px);
+                padding: 12px 20px;
+                border-radius: var(--radius-md, 12px);
+                box-shadow: var(--shadow-main);
+                color: ${isError ? 'white' : 'var(--body-color)'};
+                font-weight: 600;
+                z-index: 10000;
+                transition: all 0.3s ease;
+                transform: translateX(100px);
+                opacity: 0;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // === FIXED: Updated refresh() to generate HTML matching new styles ===
+        function refresh() {
+            const listArea = document.getElementById('listArea');
+            const logs = loadLogs();
+            
+            if (!listArea) {
+                console.error('List area element not found');
+                return;
+            }
+            
+            if (logs.length === 0) {
+                // Use .log-item with inline styles for empty state
+                listArea.innerHTML = `
+                    <div class="log-item" style="text-align: center; color: #8a8a8e; padding: 40px 16px;">
+                        <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">📝</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--body-color);">No Logs Available</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Add logs in the main log page to manage them here</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Use .log-item, .log-header, .btn.ghost, .btn.danger
+            listArea.innerHTML = logs.map(log => `
+                <div class="log-item page-enter">
+                    <div class="log-header">
+                        <div class="log-title">${escapeHtml(log.title)}</div>
+                        <div class="log-time">${escapeHtml(log.time)}</div>
+                    </div>
+                    <div class="log-desc">${escapeHtml(log.desc || 'No description')}</div>
+                    <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn ghost" onclick="openEdit(${log.id})">Edit</button>
+                        <button class="btn danger" onclick="confirmDelete(${log.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // === FIXED: Updated openEdit() to use new modal HTML structure ===
+        window.openEdit = function(id) {
+            const logs = loadLogs();
+            const log = logs.find(log => log.id === id);
+            if (!log) {
+                showNotification('❌ Log not found', true);
+                return;
+            }
+
+            // Use .h1, .small, .input, .modal-actions
+            const modal = showModal(`
+                <div class="h1">Edit Log Entry</div>
+                <div class="small" style="margin-top: 20px;">Title</div>
+                <input id="e_title" class="input" value="${escapeHtml(log.title)}" style="margin-top:8px" placeholder="Enter log title">
+                <div class="small" style="margin-top:16px;">Description</div>
+                <textarea id="e_desc" class="input" style="height:120px;margin-top:8px; resize: vertical;" placeholder="Enter log description">${escapeHtml(log.desc || '')}</textarea>
+                <div class="modal-actions">
+                    <button id="e_cancel" class="btn ghost">Cancel</button>
+                    <button id="e_save" class="btn primary">Save Changes</button>
+                </div>
+            `);
+            
+            modal.modal.querySelector('#e_cancel').addEventListener('click', () => modal.close());
+            modal.modal.querySelector('#e_save').addEventListener('click', () => {
+                const title = modal.modal.querySelector('#e_title').value.trim();
+                const desc = modal.modal.querySelector('#e_desc').value.trim();
+                
+                if (!title) {
+                    alert('Title is required');
+                    return;
+                }
+                
+                const success = editLog(id, title, desc);
+                if (success) {
+                    refresh();
+                    modal.close();
+                }
+            });
+
+            setTimeout(() => {
+                modal.modal.querySelector('#e_title').focus();
+            }, 100);
+        };
+
+        // === FIXED: Replaced confirmDelete() with a new modal ===
+        window.confirmDelete = function(id) {
+            const modal = showModal(`
+                <div class="h1">Delete Log</div>
+                <div class="small" style="margin-top: 12px; margin-bottom: 0;">Are you sure you want to delete this log? This action cannot be undone.</div>
+                <div class="modal-actions">
+                    <button id="d_cancel" class="btn ghost">Cancel</button>
+                    <button id="d_confirm" class="btn danger">Delete</button>
+                </div>
+            `);
+            
+            modal.modal.querySelector('#d_cancel').addEventListener('click', () => modal.close());
+            modal.modal.querySelector('#d_confirm').addEventListener('click', () => {
+                const success = removeLog(id);
+                if (success) {
+                    refresh();
+                }
+                modal.close();
+            });
+        };
+
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Back navigation function
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback page
+                window.location.href = 'F-Log Record System.html';
+            }
+        }
+
+        // ===== PAGE INITIALIZATION =====
+        
+        function initializePage() {
+            // Theme toggle functionality (Unchanged)
+            const htmlEl = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    htmlEl.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlEl.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = htmlEl.getAttribute('data-theme');
+                    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+                });
+            }
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(prefersDark ? 'dark' : 'light');
+            }
+
+            // Back button visibility
+            const backBtn = document.querySelector('.back-btn');
+            if (backBtn) {
+                backBtn.style.display = (window.history.length > 1) ? 'flex' : 'none';
+            }
+            
+            // Session check
+            if (!requireSession()) {
+                window.location.replace('login.html');
+                return;
+            }
+            
+            // Initialize the page
+            refresh();
+
+            console.log('Log Settings page initialized successfully');
+        }
+
+        // Initialize when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
+        } else {
+            initializePage();
+        }
+    </script>
+</body>
+</html>

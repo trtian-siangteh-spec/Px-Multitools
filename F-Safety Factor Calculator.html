@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PX-Machine Vacuum Safety Factor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+    
+    :root {
+        --page-bg: linear-gradient(180deg,#f0f1f5 0%,#ffffff 100%);
+        --text-primary: #1c1c1e;
+        --text-secondary: #333;
+        --text-link: #007aff;
+        
+        --card-bg: rgba(255,255,255,0.65);
+        --card-border: 1px solid rgba(230,230,235,0.6);
+        --shadow-main: 0 8px 32px rgba(0,0,0,0.08);
+        --shadow-hover: 0 12px 48px rgba(0,0,0,0.1);
+        
+        --btn-bg: linear-gradient(90deg,#007aff,#0a84ff);
+        --btn-shadow: 0 8px 24px rgba(0,122,255,.4);
+        --btn-shadow-hover: 0 12px 32px rgba(0,122,255,.5);
+        
+        --subtle-card-bg: rgba(255,255,255,0.75);
+        --subtle-card-border: 1px solid rgba(230,230,235,0.6);
+        
+        --back-btn-bg: #fff;
+        --back-btn-border: 1px solid rgba(0,0,0,0.04);
+        --back-btn-shadow: 0 8px 24px rgba(2,6,23,0.08);
+        
+        --theme-toggle-bg: #fff;
+        --theme-toggle-color: #333;
+    }
+
+    html[data-theme="dark"] {
+        --page-bg: #000;
+        --text-primary: #fff;
+        --text-secondary: #b0b0b0;
+        --text-link: #0a84ff;
+        
+        --card-bg: rgba(28, 28, 30, 0.7);
+        --card-border: 1px solid rgba(255, 255, 255, 0.15);
+        --shadow-main: 0 8px 32px rgba(0,0,0,0.3);
+        --shadow-hover: 0 12px 48px rgba(0,0,0,0.4);
+        
+        --btn-shadow: 0 8px 24px rgba(0,122,255,.4);
+        --btn-shadow-hover: 0 12px 32px rgba(0,122,255,.5);
+        
+        --subtle-card-bg: rgba(28, 28, 30, 0.8);
+        --subtle-card-border: 1px solid rgba(255, 255, 255, 0.15);
+        
+        --back-btn-bg: #1c1c1e;
+        --back-btn-border: 1px solid rgba(255,255,255,0.1);
+        --back-btn-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        
+        --theme-toggle-bg: #1c1c1e;
+        --theme-toggle-color: #fff;
+    }
+    
+    body{font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background: var(--page-bg);
+      color: var(--text-primary);
+      min-height:100vh;padding:2rem;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .glass-card{
+      background: var(--card-bg);
+      backdrop-filter:blur(25px)saturate(180%);
+      border-radius:25px;
+      border: var(--card-border);
+      box-shadow: var(--shadow-main);
+      transition:transform .2s,box-shadow .2s;
+    }
+    .glass-card:hover{transform:scale(1.02);box-shadow: var(--shadow-hover);}
+    
+    input,select{border:none;background:transparent;text-align:right;padding:4px 0;font-size:18px;
+      color: var(--text-primary);
+      outline:none;width:110px;}
+    label{font-size:18px; color: var(--text-secondary);}
+    
+    #calculateBtn{
+      background: var(--btn-bg);
+      color:#fff;font-size:20px;font-weight:600;
+      padding:16px;border-radius:20px;
+      box-shadow: var(--btn-shadow);
+      transition:transform .15s,box-shadow .15s;
+    }
+    #calculateBtn:hover{
+      transform:scale(1.03);
+      box-shadow: var(--btn-shadow-hover);
+    }
+    .section-title{font-size:24px;font-weight:700; color: var(--text-link); margin-bottom:12px;}
+    
+    .formula-card{
+      background: var(--subtle-card-bg);
+      border-radius:18px;
+      border: var(--subtle-card-border);
+      padding:16px 20px;font-size:16px;
+      color: var(--text-primary);
+      line-height:1.6;
+      box-shadow: var(--shadow-main);
+    }
+    .text-safe{color:#34c759;font-weight:600;}
+    .text-unsafe{color:#ff3b30;font-weight:600;}
+    .result-grid{display:grid;gap:1.5rem;}
+    @media(min-width:768px){.result-grid{grid-template-columns:repeat(3,1fr);}}
+    
+    .reference-card{
+      background: var(--subtle-card-bg);
+      border-radius:18px;
+      border: var(--subtle-card-border);
+      padding:16px 20px;font-size:16px;
+      color: var(--text-primary);
+      line-height:1.6;display:none;
+      box-shadow: var(--shadow-main);
+    }
+    .reference-card a{color: var(--text-link); text-decoration:underline;}
+    
+    .fab{position:fixed;right:20px;bottom:22px;width:60px;height:60px;border-radius:30px;
+      background: var(--btn-bg);
+      color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;
+      box-shadow: var(--btn-shadow);
+      cursor:pointer;z-index:99999;transition:transform .16s ease,box-shadow .16s ease,opacity .16s ease}
+    .fab:hover{
+      transform:scale(1.08);
+      box-shadow: var(--btn-shadow-hover);
+    }
+    .fab-tooltip{position:fixed;right:92px;bottom:34px;background:rgba(0,0,0,0.75);color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(6px);transition:opacity .14s ease,transform .14s ease;pointer-events:none;z-index:99998}
+    .fab:hover + .fab-tooltip{opacity:1;transform:translateY(0);}
+    
+    .back-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;
+      border: var(--back-btn-border);
+      background: var(--back-btn-bg);
+      color: var(--text-primary);
+      cursor:pointer;transition:transform .18s ease, box-shadow .18s ease;
+      font-size: 20px;
+    }
+    .back-btn:hover{
+      transform:scale(1.06);
+      box-shadow: var(--back-btn-shadow);
+    }
+    
+    .theme-toggle {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:38px; height:38px; border-radius:10px; 
+        border: var(--back-btn-border);
+        background: var(--theme-toggle-bg);
+        color: var(--theme-toggle-color);
+        cursor:pointer;
+        transition:transform .18s ease, box-shadow .18s ease;
+        font-size: 18px;
+    }
+    .theme-toggle:hover {
+        transform:scale(1.06); 
+        box-shadow: var(--back-btn-shadow);
+    }
+    html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+  </style>
+</head>
+<body>
+  <div class="max-w-5xl mx-auto space-y-8">
+    <div class="flex items-center justify-between">
+      <div class="flex gap-2">
+        <a href="home.html" class="back-btn" title="Back to Home">
+          ‹
+        </a>
+        <button id="themeToggle" class="theme-toggle" title="Toggle theme">
+            <span class="icon-sun">☀️</span>
+            <span class="icon-moon">🌙</span>
+        </button>
+      </div>
+      <h1 class="text-5xl font-extrabold text-center text-[#007aff] flex-1">PX-Machine Vacuum Safety Factor</h1>
+      <div class="w-24"></div> </div>
+
+    <div class="flex flex-col md:flex-row gap-8">
+      <div class="flex-1 glass-card p-6 space-y-6">
+        <h2 class="section-title">Input</h2>
+
+        <div class="flex justify-between items-center">
+          <label>Vacuum Pressure</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="vacuumPressure" placeholder="80" />
+            <select id="unitPressure">
+              <option value="Pa">Pa</option><option value="kPa" selected>kPa</option><option value="MPa">MPa</option>
+              <option value="bar">bar</option><option value="psi">psi</option><option value="atm">atm</option><option value="torr">torr</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center"><label>Length</label>
+          <div class="flex items-center gap-2"><input type="number" id="unitLength" placeholder="0.10" />
+            <select id="unitLengthUnit"><option value="m" selected>m</option><option value="mm">mm</option><option value="cm">cm</option><option value="inch">inch</option><option value="ft">ft</option></select></div>
+        </div>
+        <div class="flex justify-between items-center"><label>Width</label>
+          <div class="flex items-center gap-2"><input type="number" id="unitWidth" placeholder="0.10" />
+            <select id="unitWidthUnit"><option value="m" selected>m</option><option value="mm">mm</option><option value="cm">cm</option><option value="inch">inch</option><option value="ft">ft</option></select></div>
+        </div>
+        <div class="flex justify-between items-center"><label>Height</label>
+          <div class="flex items-center gap-2"><input type="number" id="unitHeight" placeholder="0.05" />
+            <select id="unitHeightUnit"><option value="m" selected>m</option><option value="mm">mm</option><option value="cm">cm</option><option value="inch">inch</option><option value="ft">ft</option></select></div>
+        </div>
+
+        <div class="flex justify-between items-center"><label>Material Density</label>
+          <div class="flex items-center gap-2"><input type="number" id="materialDensity" placeholder="2700" />
+            <select id="unitDensity"><option value="kg/m3" selected>kg/m³</option><option value="g/cm3">g/cm³</option><option value="lb/ft3">lb/ft³</option></select></div>
+        </div>
+
+        <div class="flex justify-between items-center"><label>Hole Diameter</label>
+          <div class="flex items-center gap-2"><input type="number" id="holeDiameter" placeholder="0.02" />
+            <select id="unitDiameterUnit"><option value="m">m</option><option value="mm">mm</option><option value="cm">cm</option><option value="inch">inch</option></select></div>
+        </div>
+
+        <div class="flex justify-between items-center"><label>Friction Coefficient</label>
+          <select id="nozzleType" onchange="toggleCustomInput()">
+            <option value="" disabled selected>Select</option>
+            <option value="1">Rubber (1.0)</option><option value="2">Plastic (0.4)</option><option value="0">Custom</option>
+          </select>
+        </div>
+        <div id="customFrictionRow" class="hidden flex justify-between items-center"><label>Custom μ</label>
+          <input type="number" id="customFrictionFactor" placeholder="0.35" /></div>
+
+        <div class="flex justify-between items-center"><label>Velocity</label>
+          <div class="flex items-center gap-2"><input type="number" id="maxVelocity" placeholder="0.50" />
+            <select id="unitVelocity"><option value="m/s" selected>m/s</option><option value="mm/s">mm/s</option><option value="km/h">km/h</option><option value="mph">mph</option><option value="ft/s">ft/s</option></select></div>
+        </div>
+
+        <div class="formula-card mt-6">
+          <h3 class="text-lg font-semibold text-[#007aff] mb-2">Formulas Used</h3>
+          <p>V = L × W × H</p><p>m = V × ρ</p><p>F<sub>W</sub> = m × g</p>
+          <p>F<sub>S</sub> = P × π (D/2)²</p><p>F<sub>F</sub> = F<sub>S</sub> × μ</p>
+          <p>F<sub>c</sub> = m × v² / R</p>
+          <p>SF<sub>V</sub> = F<sub>S</sub> / F<sub>W</sub></p><p>SF<sub>S</sub> = F<sub>F</sub> / F<sub>W</sub></p><p>SF<sub>C</sub> = F<sub>S</sub> / F<sub>c</sub></p>
+        </div>
+      </div>
+
+      <div class="flex-1 space-y-6">
+        <div id="results" class="glass-card p-6 space-y-3 hidden">
+          <h2 class="section-title">Static Results</h2>
+          <p>Mass: <span id="outputMass"></span></p>
+          <p>Volume: <span id="outputVolume"></span></p>
+          <p>Weight Force: <span id="outputWeightForce"></span></p>
+          <p>Suction Force: <span id="outputSuctionForce"></span></p>
+          <p>Friction Force: <span id="outputFriction"></span></p>
+          <p>Vertical SF: <span id="outputSafetyFactorVertical"></span></p>
+          <p>Sliding SF: <span id="outputSafetyFactorSliding"></span></p>
+        </div>
+
+        <div id="comparisonResults" class="space-y-4 hidden">
+          <div class="glass-card p-5">
+            <h3 class="section-title">PX730i (R = 0.35 m)</h3>
+            <div class="result-grid">
+              <div><b>Fc:</b> <span id="outputFc_PX730i"></span> mN</div>
+              <div><b>Compare:</b> <span id="outputComparison730i"></span></div>
+              <div><b>SF:</b> <span id="outputSafetyFactorC730i"></span></div>
+            </div>
+          </div>
+          <div class="glass-card p-5">
+            <h3 class="section-title">PX40i (H & V)</h3>
+            <p class="text-gray-600 font-semibold mt-2">Horizontal (R = 0.175 m)</p>
+            <div class="result-grid mb-3">
+              <div><b>Fc:</b> <span id="outputFc_PX40iH"></span> mN</div>
+              <div><b>Compare:</b> <span id="outputComparison40H"></span></div>
+              <div><b>SF:</b> <span id="outputSafetyFactorC40H"></span></div>
+            </div>
+            <p class="text-gray-600 font-semibold">Vertical (R = 0.13 m)</p>
+            <div class="result-grid">
+              <div><b>Fc:</b> <span id="outputFc_PX40iV"></span> mN</div>
+              <div><b>Compare:</b> <span id="outputComparison40V"></span></div>
+              <div><b>SF:</b> <span id="outputSafetyFactorC40V"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="referenceBox" class="reference-card">
+          <b>Safety Factor Reference:</b><br>
+          <ul class="list-disc ml-6 mt-2">
+            <li>Vertical Load (F<sub>S</sub>/F<sub>W</sub>) ≥ <b>2.5</b></li>
+            <li>Sliding Load (F<sub>F</sub>/F<sub>W</sub>) ≥ <b>1.5</b></li>
+            <li>Centrifugal/Dynamic Load (F<sub>S</sub>/F<sub>c</sub>) ≥ <b>1.3</b></li>
+          </ul>
+          <p class="mt-2 text-sm">Based on Schmalz Vacuum Knowledge Guide:</p>
+          <a href="https://www.schmalz.com/en/support/know-how/vacuum-knowledge/the-vacuum-system-and-its-components/system-design-calculation-example/theoretical-holding-force-of-a-suction-cup" target="_blank">
+            https://www.schmalz.com/.../theoretical-holding-force-of-a-suction-cup
+          </a>
+        </div>
+
+        <button id="calculateBtn" onclick="calculateSuction()">Calculate Safety Factors</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fab" onclick="window.location.href='FS-Safety Factor Calculator History.html'">📊</div>
+  <div class="fab-tooltip">View History</div>
+
+  <script>
+    (function() {
+        const htmlEl = document.documentElement;
+        
+        function setTheme(theme) {
+            htmlEl.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme) {
+            setTheme(savedTheme);
+        } else {
+            setTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = htmlEl.getAttribute('data-theme');
+                    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+                });
+            }
+        });
+    })();
+
+    if(!sessionStorage.getItem('cm_v7_session')) {
+      location.href='login.html';
+    }
+
+    const PI=Math.PI,G=9.81,R_PX730i=0.35,R_PX40i_H=0.175,R_PX40i_V=0.13;
+    const LIMIT_V=2.5,LIMIT_S=1.5,LIMIT_C=1.3;
+    
+    function toggleCustomInput(){
+      document.getElementById('customFrictionRow').classList.toggle('hidden',document.getElementById('nozzleType').value!=='0');
+    }
+    
+    function colorSF(id,val,limit){
+      const e=document.getElementById(id);
+      e.textContent=isFinite(val)?val.toFixed(2):"N/A";
+      e.className=(val>=limit)?"text-safe":"text-unsafe";
+    }
+    
+    function colorCompare(id,text){
+      const e=document.getElementById(id);
+      e.textContent=text;
+      e.className=(text==="SAFE")?"text-safe":"text-unsafe";
+    }
+    
+    function convertPressureToKPa(v,u){
+      return u==="Pa"?v/1000:u==="MPa"?v*1000:u==="bar"?v*100:u==="psi"?v*6.89476:u==="atm"?v*101.325:u==="torr"?v*0.133322:v;
+    }
+    
+    function convertLengthToMeter(v,u){
+      return u==="mm"?v/1000:u==="cm"?v/100:u==="inch"?v*0.0254:u==="ft"?v*0.3048:v;
+    }
+    
+    function convertDensityToSI(v,u){
+      return u==="g/cm3"?v*1000:u==="lb/ft3"?v*16.0185:v;
+    }
+    
+    function convertVelocityToSI(v,u){
+      return u==="mm/s"?v/1000:u==="km/h"?v/3.6:u==="mph"?v*0.44704:u==="ft/s"?v*0.3048:v;
+    }
+
+    function saveToHistory(params, result) {
+      const history = JSON.parse(localStorage.getItem('safety_history') || '[]');
+      const record = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        summary: `P=${params.p}kPa, L=${params.L}m, v=${params.v}m/s, μ=${params.mu}`,
+        result: result,
+        params: params
+      };
+      history.push(record);
+      localStorage.setItem('safety_history', JSON.stringify(history));
+    }
+
+    function calculateSuction(){
+      let p=+vacuumPressure.value,L=+unitLength.value,W=+unitWidth.value,H=+unitHeight.value,D=+holeDiameter.value,
+      dens=+materialDensity.value,v=+maxVelocity.value,t=nozzleType.value;
+      
+      if([p,L,W,H,D,dens,v].some(val => isNaN(val) || val === 0 )||!t){
+        alert("Please fill all inputs with valid numbers.");
+        return;
+      }
+      
+      let p_kPa = convertPressureToKPa(p,unitPressure.value);
+      let L_m = convertLengthToMeter(L,unitLengthUnit.value);
+      let W_m = convertLengthToMeter(W,unitWidthUnit.value);
+      let H_m = convertLengthToMeter(H,unitHeightUnit.value);
+      let D_m = convertLengthToMeter(D,unitDiameterUnit.value);
+      let dens_si = convertDensityToSI(dens,unitDensity.value);
+      let v_si = convertVelocityToSI(v,unitVelocity.value);
+      
+      let μ=t==='1'?1.0:t==='2'?0.4:parseFloat(customFrictionFactor.value)||0.3;
+      
+      const V=L_m*W_m*H_m,m=V*dens_si,Fw=m*G,Fs=p_kPa*1000*PI*(D_m/2)**2,Ff=Fs*μ;
+      const Fc730=m*v_si*v_si/R_PX730i,Fc40H=m*v_si*v_si/R_PX40i_H,Fc40V=m*v_si*v_si/R_PX40i_V;
+      const SFv=Fs/Fw,SFs=Ff/Fw,SFc730=Fs/Fc730,SFc40H=Fs/Fc40H,SFc40V=Fs/Fc40V;
+      
+      outputMass.textContent=(m*1000).toFixed(3)+" g";
+      outputVolume.textContent=(V*1e9).toFixed(3)+" mm³";
+      outputWeightForce.textContent=(Fw*1000).toFixed(3)+" mN";
+      outputSuctionForce.textContent=(Fs*1000).toFixed(3)+" mN";
+      outputFriction.textContent=(Ff*1000).toFixed(3)+" mN";
+      
+      colorSF("outputSafetyFactorVertical",SFv,LIMIT_V);
+      colorSF("outputSafetyFactorSliding",SFs,LIMIT_S);
+      colorSF("outputSafetyFactorC730i",SFc730,LIMIT_C);
+      colorSF("outputSafetyFactorC40H",SFc40H,LIMIT_C);
+      colorSF("outputSafetyFactorC40V",SFc40V,LIMIT_C);
+      
+      outputFc_PX730i.textContent=(Fc730*1000).toFixed(3);
+      outputFc_PX40iH.textContent=(Fc40H*1000).toFixed(3);
+      outputFc_PX40iV.textContent=(Fc40V*1000).toFixed(3);
+      
+      colorCompare("outputComparison730i",Fs>Fc730?"SAFE":"UNSAFE");
+      colorCompare("outputComparison40H",Fs>Fc40H?"SAFE":"UNSAFE");
+      colorCompare("outputComparison40V",Fs>Fc40V?"SAFE":"UNSAFE");
+      
+      results.classList.remove('hidden');
+      comparisonResults.classList.remove('hidden');
+      document.getElementById('referenceBox').style.display='block';
+
+      const params = {
+        p: p_kPa, L: L_m, W: W_m, H: H_m, D: D_m, 
+        dens: dens_si, v: v_si, mu: μ
+      };
+      const resultText = `V_SF: ${SFv.toFixed(2)}, S_SF: ${SFs.toFixed(2)}, C_SF(730): ${SFc730.toFixed(2)}`;
+      saveToHistory(params, resultText);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const replayData = localStorage.getItem('safety_replay');
+      if (replayData) {
+        try {
+          const data = JSON.parse(replayData);
+          if (data.params) {
+            document.getElementById('vacuumPressure').value = data.params.p;
+            document.getElementById('unitPressure').value = 'kPa';
+            document.getElementById('unitLength').value = data.params.L;
+            document.getElementById('unitLengthUnit').value = 'm';
+            document.getElementById('unitWidth').value = data.params.W;
+            document.getElementById('unitWidthUnit').value = 'm';
+            document.getElementById('unitHeight').value = data.params.H;
+            document.getElementById('unitHeightUnit').value = 'm';
+            document.getElementById('materialDensity').value = data.params.dens;
+            document.getElementById('unitDensity').value = 'kg/m3';
+            document.getElementById('holeDiameter').value = data.params.D;
+            document.getElementById('unitDiameterUnit').value = 'm';
+            document.getElementById('maxVelocity').value = data.params.v;
+            document.getElementById('unitVelocity').value = 'm/s';
+            
+            if (data.params.mu === 1.0) {
+              document.getElementById('nozzleType').value = '1';
+            } else if (data.params.mu === 0.4) {
+              document.getElementById('nozzleType').value = '2';
+            } else {
+              document.getElementById('nozzleType').value = '0';
+              document.getElementById('customFrictionFactor').value = data.params.mu;
+            }
+            toggleCustomInput();
+            
+            calculateSuction();
+          }
+          
+          showReplayNotification(data);
+          localStorage.removeItem('safety_replay');
+        } catch (e) {
+          console.error('Error parsing replay data:', e);
+        }
+      }
+    });
+
+    function showReplayNotification(data) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #00b894;
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        z-index: 10000;
+        box-shadow: 0 12px 32px rgba(0,184,148,0.3);
+        font-weight: 600;
+        max-width: 400px;
+        backdrop-filter: blur(20px);
+      `;
+      notification.innerHTML = `
+        <div style="font-size: 16px; margin-bottom: 8px;">🔁 Replaying Previous Calculation</div>
+        <div style="font-size: 12px; opacity: 0.9;">${data.summary || 'Previous calculation loaded'}</div>
+        <div style="font-size: 11px; margin-top: 8px; opacity: 0.7;">${new Date(data.timestamp).toLocaleString() || ''}</div>
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 5000);
+    }
+
+    let inactivityTimer;
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(logout, 10 * 60 * 1000);
+    }
+    function logout() {
+        sessionStorage.removeItem('cm_v7_session');
+        location.href = 'login.html';
+    }
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keypress', resetInactivityTimer);
+    document.addEventListener('click', resetInactivityTimer);
+    document.addEventListener('scroll', resetInactivityTimer);
+    document.addEventListener('touchstart', resetInactivityTimer);
+    resetInactivityTimer();
+  </script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover"/>
+    <title>Cable Inventory - Cable Management System</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        :root {
+            --ios-blue: #007aff;
+            --ios-red: #ff3b30;
+            --ios-gray: #f2f2f7;
+            --ios-gray-dark: #1c1c1e;
+            --ios-label-color-light: #fff;
+            --ios-label-color-dark: #000;
+            
+            /* --- MODIFIED: Light Mode UI --- */
+            --page-bg: #fff; /* Plain white */
+            --body-color: var(--ios-label-color-dark); /* Black text */
+            --ios-glass-bg: rgba(248, 248, 248, 0.85); /* Slightly opaque light glass */
+            --ios-glass-border: rgba(0, 0, 0, 0.08);
+            --ios-input-bg: rgba(0, 0, 0, 0.05);
+            --back-btn-bg: rgba(255,255,255,0.8);
+            --back-btn-color: #333;
+            --theme-toggle-bg: rgba(255,255,255,0.8);
+            --theme-toggle-color: #333;
+            --btn-ghost-bg: rgba(0, 0, 0, 0.05);
+            --btn-ghost-color: #000;
+            --btn-ghost-border: 1px solid rgba(0, 0, 0, 0.1);
+            
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+        }
+        
+        /* === MODIFIED: Use data-theme for dark mode === */
+        html[data-theme="dark"] {
+            /* --- MODIFIED: Dark Mode UI --- */
+            --page-bg: #000; /* Plain black */
+            --body-color: var(--ios-label-color-light); /* White text */
+            --ios-glass-bg: rgba(28, 28, 30, 0.85); /* Slightly opaque dark glass */
+            --ios-glass-border: rgba(255, 255, 255, 0.15);
+            --ios-input-bg: rgba(58, 58, 60, 0.5);
+            --back-btn-bg: rgba(28, 28, 30, 0.8);
+            --back-btn-color: #fff;
+            --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+            --theme-toggle-color: #fff;
+            --btn-ghost-bg: rgba(255, 255, 255, 0.1);
+            --btn-ghost-color: #fff;
+            --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            /* --- ADDED: Shadow Vars --- */
+            --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Fallback for first load (Kept for compatibility) */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --page-bg: #000;
+                --body-color: var(--ios-label-color-light);
+                --ios-glass-bg: rgba(28, 28, 30, 0.85);
+                --ios-glass-border: rgba(255, 255, 255, 0.15);
+                --ios-input-bg: rgba(58, 58, 60, 0.5);
+                --back-btn-bg: rgba(28, 28, 30, 0.8);
+                --back-btn-color: #fff;
+                --theme-toggle-bg: rgba(28, 28, 30, 0.8);
+                --theme-toggle-color: #fff;
+                --btn-ghost-bg: rgba(255, 255, 255, 0.1);
+                --btn-ghost-color: #fff;
+                --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.2);
+                --shadow-main: 0 5px 15px rgba(0, 0, 0, 0.2);
+                --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.25);
+            }
+        }
+        
+        /* --- 1. Base & Fonts --- */
+        html { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            /* === MODIFIED: Use CSS Vars === */
+            background-color: var(--page-bg);
+            color: var(--body-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        /* --- 2. Page Layout & Animations --- */
+        .app-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        .page-container {
+            padding-top: 80px; /* Space for fixed buttons */
+            padding-bottom: 60px;
+        }
+        @keyframes page-enter-animation {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-enter {
+            animation: page-enter-animation 0.4s ease-out;
+        }
+
+        /* --- 3. Header & Back Button --- */
+        /* === MODIFIED: .back-btn for shadow and centering === */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            font-size: 24px;
+            font-weight: 400; 
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            cursor: pointer;
+            background: var(--back-btn-bg);
+            color: var(--back-btn-color);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main);
+            backdrop-filter: blur(10px);
+            
+            /* Added for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-btn:hover { 
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--ios-glass-border);
+            background: var(--theme-toggle-bg);
+            color: var(--theme-toggle-color);
+            box-shadow: var(--shadow-main);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            
+            /* Added for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-toggle:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        /* === ADDED: Hide/show icons === */
+        .theme-toggle .icon-sun,
+        .theme-toggle .icon-moon {
+            font-size: 20px; 
+            color: var(--theme-toggle-color);
+        }
+        html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+        html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+        
+        /* === MODIFIED: Standardized Topbar === */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 16px;
+        }
+        .topbar-left {
+            flex-grow: 1;
+        }
+        .topbar-right {
+            flex-shrink: 0;
+        }
+        .topbar .h1 {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .topbar .h2 {
+            font-size: 17px;
+            font-weight: 400;
+            color: #8a8a8e; /* Stays same in light/dark */
+            margin: 4px 0 0 0;
+        }
+
+        /* --- 4. Grid --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- 5. Card (Themed) --- */
+        .card {
+            background: var(--ios-glass-bg);
+            border: 1px solid var(--ios-glass-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow-main); /* ADDED SHADOW */
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover); /* MODIFIED SHADOW */
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+        .card-desc {
+            font-size: 14px;
+            color: #8a8a8e;
+            margin: 0 0 16px 0;
+        }
+        .card-qty {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--ios-blue);
+            margin: 0;
+        }
+        .card-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid var(--ios-glass-border);
+            padding-top: 16px;
+        }
+
+        /* --- 6. Form Elements (Themed) --- */
+        .input {
+            width: 100%;
+            box-sizing: border-box; /* Added for better padding control */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            padding: 12px;
+            border: 1px solid var(--ios-glass-border); /* Added border */
+            border-radius: 8px;
+            background: var(--ios-input-bg);
+            color: var(--body-color);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-main); /* ADDED SHADOW */
+        }
+        .input::placeholder {
+            color: #8a8a8e;
+        }
+        .input:focus {
+            outline: none;
+            border-color: var(--ios-blue); /* MODIFIED */
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+        .btn {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease; /* MODIFIED transition */
+            box-shadow: var(--shadow-main); /* ADDED SHADOW */
+            white-space: nowrap; /* Prevent button text wrapping */
+        }
+        .btn:hover {
+            box-shadow: var(--shadow-hover); /* ADDED hover shadow */
+            transform: translateY(-2px); /* Added hover effect */
+        }
+        .btn:active {
+            transform: scale(0.96);
+            box-shadow: var(--shadow-main); /* Reset shadow on click */
+        }
+        .btn.primary {
+            background-color: var(--ios-blue);
+            color: white;
+        }
+        .btn.ghost {
+            background-color: var(--btn-ghost-bg);
+            color: var(--btn-ghost-color);
+            border: var(--btn-ghost-border);
+        }
+        .btn.danger {
+            background-color: var(--ios-red);
+            color: white;
+        }
+
+        /* === ADDED: Modal Fix === */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-backdrop.active {
+            opacity: 1;
+        }
+        .modal-card {
+            background: var(--ios-glass-bg); /* Uses theme variable */
+            border: 1px solid var(--ios-glass-border);
+            color: var(--body-color); /* Uses theme variable */
+            width: 90%;
+            max-width: 400px;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-hover);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-backdrop.active .modal-card {
+            transform: scale(1);
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        .modal-text {
+            font-size: 15px;
+            color: #8a8a8e;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* --- 7. Utility --- */
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .topbar-right {
+                width: 100%;
+                margin-top: 10px;
+            }
+            .topbar-right .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (!sessionStorage.getItem('cm_v7_session')) window.location.href = 'login.html';
+    </script>
+
+    <div class="app-wrap">
+        
+        <div class="back-btn" id="backBtn" title="Back to Home">
+            ←
+        </div>
+
+        <div class="theme-toggle" id="themeToggle" title="Toggle Theme">
+            <span class="icon-sun">☀️</span>
+            <span class="icon-moon">🌙</span>
+        </div>
+
+        <div class="page-container page-enter">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1 class="h1">Cable Inventory</h1>
+                    <p class="h2">Manage boxes and cable counts.</p>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn primary" id="addBoxBtn">+ New Box</button>
+                </div>
+            </div>
+
+            <div class="grid" id="inventoryGrid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        // Using localStorage key: 'cm_inventory_v2'
+        const STORAGE_KEY = 'cm_inventory_v2';
+        
+        // Initial Dummy Data (only if storage empty)
+        const INITIAL_DATA = [
+            { id: 1700000001, name: 'Box A', desc: 'Power Cables (IEC, Fig-8)', qty: 45 },
+            { id: 1700000002, name: 'Box B', desc: 'Ethernet (Cat5e, Cat6)', qty: 120 },
+            { id: 1700000003, name: 'Box C', desc: 'HDMI & DisplayPort', qty: 30 },
+            { id: 1700000004, name: 'Box D', desc: 'USB Cables (Type-A, Micro)', qty: 85 },
+            { id: 1700000005, name: 'Box E', desc: 'Audio Cables (3.5mm, RCA)', qty: 20 },
+        ];
+
+        let inventory = [];
+
+        // --- HELPER FUNCTIONS ---
+        function loadInventory() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try {
+                    inventory = JSON.parse(raw);
+                } catch(e) {
+                    console.error("Failed to parse inventory", e);
+                    inventory = INITIAL_DATA;
+                }
+            } else {
+                inventory = INITIAL_DATA;
+                saveInventory();
+            }
+        }
+
+        function saveInventory() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+        }
+
+        function generateId() {
+            return Date.now();
+        }
+
+        // --- RENDER ---
+        function renderInventory() {
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = '';
+
+            inventory.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-title">${item.name}</div>
+                    <div class="card-desc">${item.desc}</div>
+                    <div class="card-qty">${item.qty} items</div>
+                    <div class="card-actions">
+                        <button class="btn ghost" onclick="editBox(${item.id})">Edit</button>
+                        <button class="btn danger" onclick="deleteBox(${item.id})">Delete</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- ACTIONS ---
+        function addBox(name, desc, items) {
+            inventory.push({
+                id: generateId(),
+                name: name,
+                desc: desc,
+                qty: items
+            });
+            saveInventory();
+            renderInventory();
+        }
+
+        function updateBox(id, name, desc, items) {
+            const idx = inventory.findIndex(x => x.id === id);
+            if (idx > -1) {
+                inventory[idx].name = name;
+                inventory[idx].desc = desc;
+                inventory[idx].qty = items;
+                saveInventory();
+                renderInventory();
+            }
+        }
+
+        function deleteBox(id) {
+            // Using confirm dialog for simplicity, but could be modal
+            if (confirm('Are you sure you want to delete this box?')) {
+                inventory = inventory.filter(x => x.id !== id);
+                saveInventory();
+                renderInventory();
+            }
+        }
+
+        // --- MODAL SYSTEM ---
+        class SimpleModal {
+            constructor() {
+                this.overlay = null;
+                this.modal = null;
+            }
+
+            create(contentHtml) {
+                // Remove existing if any
+                this.close();
+
+                this.overlay = document.createElement('div');
+                this.overlay.className = 'modal-backdrop';
+                
+                this.modal = document.createElement('div');
+                this.modal.className = 'modal-card';
+                this.modal.innerHTML = contentHtml;
+                
+                // Prevent click inside modal from closing
+                this.modal.addEventListener('click', e => e.stopPropagation());
+
+                this.overlay.appendChild(this.modal);
+                document.body.appendChild(this.overlay);
+                
+                // Animate in
+                requestAnimationFrame(() => {
+                    this.overlay.classList.add('active');
+                });
+                
+                // Click outside to close
+                this.overlay.addEventListener('click', () => this.close());
+            }
+
+            close() {
+                if (this.overlay) {
+                    this.overlay.classList.remove('active');
+                    setTimeout(() => {
+                        if (this.overlay && this.overlay.parentNode) {
+                            this.overlay.parentNode.removeChild(this.overlay);
+                        }
+                        this.overlay = null;
+                        this.modal = null;
+                    }, 300);
+                }
+            }
+        }
+        
+        const modal = new SimpleModal();
+
+        // --- EVENT HANDLERS (Global) ---
+        window.editBox = function(id) {
+            const item = inventory.find(x => x.id === id);
+            if (!item) return;
+
+            modal.create(`
+                <h3 class="modal-title">Edit Box</h3>
+                <p class="modal-text">Update details for ${item.name}</p>
+                <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+                    <input type="text" class="input" id="editName" value="${item.name}" placeholder="Box Name (e.g. Box A)">
+                    <input type="text" class="input" id="editDesc" value="${item.desc}" placeholder="Description">
+                    <input type="number" class="input" id="editItems" value="${item.qty}" placeholder="Quantity">
+                </div>
+                <div class="modal-actions">
+                    <button id="editCancel" class="btn ghost">Cancel</button>
+                    <button id="editSave" class="btn primary">Save Changes</button>
+                </div>
+            `);
+
+            // Bind events
+            modal.modal.querySelector('#editCancel').addEventListener('click', () => modal.close());
+            modal.modal.querySelector('#editSave').addEventListener('click', () => {
+                const name = modal.modal.querySelector('#editName').value.trim();
+                const desc = modal.modal.querySelector('#editDesc').value.trim();
+                const items = parseInt(modal.modal.querySelector('#editItems').value) || 0;
+                
+                if (!name) {
+                    alert('Box name is required');
+                    return;
+                }
+                
+                updateBox(id, name, desc, items);
+                modal.close();
+            });
+        };
+
+        window.deleteBox = function(id) {
+            // Re-implement delete with custom modal if desired, or stick to native confirm
+             if (confirm('Delete this box permanently?')) {
+                inventory = inventory.filter(x => x.id !== id);
+                saveInventory();
+                renderInventory();
+            }
+        };
+
+        function initializePage() {
+            // Back button
+            document.getElementById('backBtn').addEventListener('click', () => {
+                window.location.href = 'home.html';
+            });
+
+            // Theme Logic (Matches Home)
+            const htmlEl = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            function setTheme(theme) {
+                htmlEl.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = htmlEl.getAttribute('data-theme');
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+
+            // Init Theme
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(prefersDark ? 'dark' : 'light');
+            }
+
+            // Load Data
+            loadInventory();
+            renderInventory();
+
+            // Add Box Button
+            const addBtn = document.getElementById('addBoxBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    modal.create(`
+                        <h3 class="modal-title">New Box</h3>
+                        <p class="modal-text">Create a new container in your inventory.</p>
+                        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+                            <input type="text" class="input" id="boxName" placeholder="Box Name (e.g. Box F)">
+                            <input type="text" class="input" id="boxDesc" placeholder="Content Description">
+                            <input type="number" class="input" id="boxItems" placeholder="Initial Quantity">
+                        </div>
+                        <div class="modal-actions">
+                            <button id="boxCancel" class="btn ghost">Cancel</button>
+                            <button id="boxSave" class="btn primary">Save Box</button>
+                        </div>
+                    `);
+                    
+                    modal.modal.querySelector('#boxCancel').addEventListener('click', () => modal.close());
+                    modal.modal.querySelector('#boxSave').addEventListener('click', () => {
+                        const name = modal.modal.querySelector('#boxName').value.trim();
+                        const desc = modal.modal.querySelector('#boxDesc').value.trim();
+                        const items = parseInt(modal.modal.querySelector('#boxItems').value) || 0;
+                        
+                        if (!name) {
+                            alert('Box name is required');
+                            return;
+                        }
+                        
+                        addBox(name, desc, items);
+                        modal.close();
+                        renderInventory();
+                    });
+
+                    setTimeout(() => {
+                        modal.modal.querySelector('#boxName').focus();
+                    }, 100);
+                });
+            }
+            console.log('Cable Inventory page initialized successfully');
+        }
+
+        // Initialize when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
+        } else {
+            initializePage();
+        }
+    </script>
+</body>
+</html>

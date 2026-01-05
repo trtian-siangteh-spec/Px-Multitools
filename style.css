@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Checklist Generator</title>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* --- Light Mode (Default) --- */
+        /* --- White BG, Black Font --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff; /* White Background */
+            color: #000000; /* Black Font (This will be inherited by titles) */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        
+        .ios-card {
+            background-color: #ffffff;
+            border-radius: 1.25rem; /* 20px */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid #f0f2f5;
+        }
+
+        .ios-input, .ios-select, .ios-textarea {
+            background-color: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.75rem; /* 12px */
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.95rem;
+            color: #111827; /* Black text */
+        }
+        .ios-input::placeholder, .ios-textarea::placeholder {
+            color: #6b7280;
+        }
+        .ios-input:focus, .ios-select:focus, .ios-textarea:focus {
+            outline: none;
+            border-color: #007aff; /* Blue border */
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+
+        .ios-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            text-decoration: none;
+        }
+        .ios-btn-primary {
+            background-color: #007aff; /* Blue Button */
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+        }
+        .ios-btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
+        }
+        .ios-btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .ios-btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .ios-btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .ios-btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .return-button {
+            background-color: #6c757d;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .return-button:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(108, 117, 125, 0.2);
+        }
+
+        /* --- Dark Mode --- */
+        /* --- Black BG, White Font --- */
+        .dark body {
+            background-color: #000000; /* Pure Black Background */
+            color: #ffffff; /* White Font (This will be inherited by titles) */
+        }
+        
+        .dark .ios-card {
+            background-color: #1c1c1e; /* Dark Gray Card */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid #2c2c2e;
+        }
+
+        .dark .ios-input, .dark .ios-select, .dark .ios-textarea {
+            background-color: #2c2c2e; /* Darker Input BG */
+            border-color: #3a3a3c;
+            color: #ffffff; /* White Font */
+        }
+        .dark .ios-input::placeholder, .dark .ios-textarea::placeholder {
+            color: #8e8e93; 
+        }
+        .dark .ios-input:focus, .dark .ios-select:focus, .dark .ios-textarea:focus {
+            border-color: #007aff; /* Blue border (kept) */
+            background-color: #3a3a3c;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+        
+        .dark .ios-btn-primary {
+            background-color: #007aff; /* Blue Button */
+            color: white;
+        }
+        .dark .ios-btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .dark .ios-btn-secondary {
+            background-color: #2c2c2e;
+            color: #ffffff;
+        }
+        .dark .ios-btn-secondary:hover {
+            background-color: #3a3a3c;
+        }
+
+        .dark .return-button {
+            background-color: #2c2c2e;
+        }
+        .dark .return-button:hover {
+            background-color: #3a3a3c;
+        }
+
+        /* --- Preview Styles (Light) --- */
+        /* --- These styles are for the *content* inside the preview box --- */
+        /* --- These are NOT changed, as requested --- */
+        #preview-content h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; color: #111827; }
+        #preview-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #1f2937; }
+        #preview-content h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.0rem; margin-bottom: 0.5rem; color: #374151; }
+        #preview-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; color: #1f2937; }
+        #preview-content li { margin-bottom: 0.25rem; }
+        #preview-content table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; }
+        #preview-content th, #preview-content td { border: 1px solid #d1d5db; padding: 0.75rem; text-align: left; color: #111827; }
+        #preview-content th { background-color: #f9fafb; font-weight: 600; }
+        #preview-content p { margin-bottom: 0.75rem; color: #111827; }
+
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <script>
+        if (!sessionStorage.getItem('cm_v7_session')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="flex justify-end pb-2">
+            <button id="darkModeToggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a5 5 0 100-10 5 5 0 000 10z" />
+                </svg>
+                <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <button id="returnButton" class="return-button">← Back to Home</button>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center mb-8 dark:text-white">AI Checklist Generator</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <div class="ios-card">
+                <h2 class="text-2xl font-bold mb-6 dark:text-white">1. Project Details</h2>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label for="project-title" class="font-semibold mb-2 block dark:text-white">Project Title</label>
+                        <input type="text" id="project-title" class="ios-input" placeholder="e.g., 'CNC Mill Model-1000' or 'ShopSphere E-comm App'">
+                    </div>
+                    
+                    <div>
+                        <label for="project-type" class="font-semibold mb-2 block dark:text-white">Project Type</label>
+                        <input type="text" id="project-type" class="ios-input" placeholder="e.g., 'Software', 'Machine', 'Electrical', 'Combined System'">
+                    </div>
+                    
+                    <div>
+                        <label for="project-components" class="font-semibold mb-2 block dark:text-white">Key Components / Modules</label>
+                        <textarea id="project-components" rows="4" class="ios-textarea" placeholder="e.g., User login, 3-axis spindle, Over-voltage protection"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="project-audience" class="font-semibold mb-2 block dark:text-white">Target Audience / Use Case</label>
+                        <input type="text" id="project-audience" class="ios-input" placeholder="e.g., 'Small workshops', 'Online shoppers', 'Lab technicians'">
+                    </div>
+
+                    <div>
+                        <label for="api-key" class="font-semibold mb-2 block dark:text-white">Your Gemini API Key (Optional)</label>
+                        <input type="password" id="api-key" class="ios-input" placeholder="Leave blank to use internal key">
+                        <p class="text-xs text-gray-500 mt-1 dark:text-gray-300">Uses a fallback key if empty. Your key is never stored.</p>
+                    </div>
+
+                    <div class="pt-4 hidden"> 
+                        <button id="generateButton" class="ios-btn ios-btn-primary w-full text-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38zM10 5.414L6.09 11H10v5.586L13.91 9H10V5.414z" clip-rule="evenodd" />
+                            </svg>
+                            Generate Checklist
+                        </button>
+                    </div>
+                </div>
+
+                <div id="status-loading" class="hidden text-center text-blue-600 font-semibold mt-4 dark:text-blue-400">
+                    <svg class="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400 inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating checklist...
+                </div>
+                <div id="status-error" class="hidden text-center text-red-600 font-semibold mt-4 dark:text-red-400">
+                    Error: Something went wrong. Please check your API key or console (F12) for details.
+                </div>
+
+                <h2 class="text-2xl font-bold mb-6 mt-10 dark:text-white">2. Export Options</h2>
+                <div class="space-y-3">
+                     <p class="dark:text-white">Load a company logo to embed in the document export.</p>
+                     <div id="logo-status" class="text-sm text-gray-500 dark:text-gray-300"></div>
+                    <div class="flex gap-4">
+                        <label class="ios-btn ios-btn-secondary cursor-pointer">
+                            <span id="load-logo-text">Load Logo</span>
+                            <input type="file" id="logo-uploader" class="hidden" accept="image/png, image/jpeg">
+                        </label>
+                        <button id="clear-logo-button" class="ios-btn ios-btn-danger" style="display: none;">Clear Logo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-card sticky top-8" style="align-self: start;">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold dark:text-white">Preview</h2>
+                    <div class="flex flex-wrap gap-3"> 
+                        <button id="copyButton" class="ios-btn ios-btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                            Copy for Docs
+                        </button>
+                        <button id="copySheetButton" class="ios-btn ios-btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2z" />
+                            </svg>
+                            Copy for Sheets
+                        </button>
+                        <button id="exportExcelButton" class="ios-btn ios-btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Export to Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="border rounded-lg p-6 bg-white shadow-inner" style="min-height: 400px;">
+                    <div id="preview-header" class="flex justify-between items-start mb-4 pb-4 border-b">
+                        <img id="preview-logo" src="" alt="Company Logo" class="h-16" style="display: none;">
+                        <div class="text-right text-xs text-gray-600">
+                            <strong>ViTrox Technologies Sdn. Bhd.</strong><br>
+                            746, Persiaran Cassia Selatan 3<br>
+                            14110 Bandar Cassia, Pulau Pinang, Malaysia<br>
+                            Tel: (+604) 545 9988
+                        </div>
+                    </div>
+                    
+                    <h1 id="preview-title" class="text-2xl font-bold mb-6 text-center text-gray-900">Test Plan</h1>
+                    <div id="preview-content">
+                        </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        // --- DOM Elements ---
+        const inputs = {
+            title: document.getElementById('project-title'),
+            type: document.getElementById('project-type'),
+            components: document.getElementById('project-components'),
+            audience: document.getElementById('project-audience'),
+            apiKey: document.getElementById('api-key'),
+            logoUploader: document.getElementById('logo-uploader')
+        };
+        
+        const buttons = {
+            generate: document.getElementById('generateButton'),
+            export: document.getElementById('exportExcelButton'),
+            copy: document.getElementById('copyButton'),
+            copySheet: document.getElementById('copySheetButton'),
+            loadLogoButton: document.getElementById('load-logo-text'),
+            clearLogoButton: document.getElementById('clear-logo-button'),
+            darkModeToggle: document.getElementById('darkModeToggle') // This is the toggle
+        };
+        
+        const preview = {
+            container: document.getElementById('preview-container'),
+            title: document.getElementById('preview-title'),
+            content: document.getElementById('preview-content'),
+            logo: document.getElementById('preview-logo'),
+            logoStatus: document.getElementById('logo-status')
+        };
+        
+        const statusElements = {
+            loading: document.getElementById('status-loading'),
+            error: document.getElementById('status-error')
+        };
+
+        const internalApiKey = "AIzaSyCUDhfkmgZAKRSPCBTLZcoLnTWecW-DmkQ";
+        let debounceTimer;
+
+        // --- Event Listeners ---
+        buttons.export.addEventListener('click', exportToExcel);
+        buttons.copy.addEventListener('click', copyForDocs);
+        buttons.copySheet.addEventListener('click', copyForSheets);
+        inputs.title.addEventListener('input', handleInputChange);
+        inputs.logoUploader.addEventListener('change', loadLogo);
+        buttons.clearLogoButton.addEventListener('click', clearLogo);
+
+        // Auto-generate listeners
+        inputs.title.addEventListener('input', debouncedGenerate);
+        inputs.type.addEventListener('input', debouncedGenerate);
+        inputs.components.addEventListener('input', debouncedGenerate);
+        inputs.audience.addEventListener('input', debouncedGenerate);
+
+        // Return button functionality
+        document.getElementById('returnButton').addEventListener('click', () => {
+            window.location.href = 'home.html'; // Or whatever the main page is
+        });
+
+        // Dark mode toggle listener
+        buttons.darkModeToggle.addEventListener('click', toggleTheme);
+
+        // --- Functions ---
+        
+        /**
+         * Toggles dark mode
+         */
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        /**
+         * Initializes theme from localStorage or system preference
+         */
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || 
+                (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        /**
+         * Debounce function to delay API calls
+         */
+        function debouncedGenerate() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (inputs.components.value.trim() !== "") { // Only run if key info is present
+                    generateTestPlan();
+                }
+            }, 1500); // 1.5 second delay after user stops typing
+        }
+
+        /**
+         * Get API key: User-provided or fallback
+         */
+        function getApiKey() {
+            return inputs.apiKey.value.trim() || internalApiKey;
+        }
+
+        /**
+         * Sync project title to preview
+         */
+        function handleInputChange() {
+            const title = inputs.title.value;
+            if (title) {
+                preview.title.textContent = `Test Plan: ${title}`;
+            } else {
+                preview.title.textContent = 'Test Plan';
+            }
+        }
+        
+        /**
+         * Main function to generate the test plan
+         */
+        async function generateTestPlan() {
+            setLoadingState(true);
+            
+            const title = inputs.title.value || "Untitled Project";
+            const type = inputs.type.value || "Not specified";
+            const components = inputs.components.value;
+            const audience = inputs.audience.value || "General users";
+
+            const prompt = `
+                Create a comprehensive test checklist for a project. Format the output as clean HTML.
+                
+                Project Details:
+                - Project Title: ${title}
+                - Project Type: ${type} (e.g., 'Software', 'Machine', 'Electrical', 'Combined System')
+                - Key Components/Modules: ${components}
+                - Target Audience/Use Case: ${audience}
+                
+                Instructions:
+                Generate a professional test checklist document using HTML tags.
+                - Use <h2> for main sections.
+                - Use <h3> for sub-sections.
+                - Use <ul> and <li> for bullet points.
+                - Use <p> for paragraphs.
+                - Tailor all content to the "Project Type" and "Key Components".
+
+                **Required Sections (in this order):**
+                
+                <h2>1. Introduction</h2>
+                <h3>1.1 Purpose</h3>
+                <p>This document outlines the test plan and checklists for the ${title}. The objective is to verify its functionality, performance, and safety according to specifications.</p>
+                <h3>1.2 Scope</h3>
+                <p>This plan covers testing for the following key components: ${components}. It addresses functional testing, safety checks, and performance verification.</p>
+
+                <h2>2. Prerequisites & Setup</h2>
+                <h3>2.1 Required Equipment</h3>
+                <p>Based on the project type, list necessary test equipment.</p>
+                <ul>
+                    ${type.toLowerCase().includes('electrical') ? '<li>Calibrated Multimeter</li><li>HiPot Tester</li><li>Power Supply</li>' : ''}
+                    ${type.toLowerCase().includes('machine') ? '<li>Safety Glasses & Gloves</li><li>Torque Wrench</li><li>Laser Interferometer (if applicable)</li>' : ''}
+                    ${type.toLowerCase().includes('software') ? '<li>Test PC with required OS</li><li>Network Analyzer (if applicable)</li><li>Database client</li>' : ''}
+                    <li>All necessary jigs and fixtures.</li>
+                </ul>
+                <h3>2.2 Software/Firmware</h3>
+                <ul>
+                    <li>Project Software Version: [Specify Version]</li>
+                    <li>Firmware Version: [Specify Version]</li>
+                </ul>
+
+                <h2>3. Safety Precautions & Cautions</h2>
+                <p>All testing must be performed by qualified personnel. Adhere to all standard safety procedures.</p>
+                ${type.toLowerCase().includes('electrical') ? `
+                <h3>3.1 Electrical Cautions</h3>
+                <ul>
+                    <li><strong>HIGH VOLTAGE WARNING:</strong> Test area must be clear. Only authorized personnel may conduct power-on tests.</li>
+                    <li>Verify all power is OFF and locked-out before touching internal components.</li>
+                    <li>Use properly rated PPE and insulated tools.</li>
+                </ul>` : ''}
+                ${type.toLowerCase().includes('machine') ? `
+                <h3>3.2 Machine Cautions</h3>
+                <ul>
+                    <li>Ensure all safety guards and interlocks are in place before operation.</li>
+                    <li>Keep hands and tools clear of moving parts.</li>
+                    <li>Be aware of all E-Stop (Emergency Stop) locations.</li>
+                </ul>` : ''}
+                ${type.toLowerCase().includes('software') ? `
+                <h3>3.3 Software Cautions</h3>
+                <ul>
+                    <li>Always back up databases and configurations before applying updates or running destructive tests.</li>
+                    <li>Conduct tests in an isolated test environment, not on a live production system.</li>
+                </ul>` : ''}
+
+                <h2>4. Detailed Test Checklists</h2>
+                <p>Execute the following checks for each module.</p>
+                
+                <h3>4.1 Module: [Component 1 Name from list]</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Test Description</th>
+                            <th>Test Procedure</th>
+                            <th>Expected Result</th>
+                            <th>Actual Result</th>
+                            <th>Pass/Fail [ ]</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>[Specific Test for Component 1]</td>
+                            <td>[Step-by-step procedure]</td>
+                            <td>[What should happen]</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>[Another Test for Component 1]</td>
+                            <td>[Step-by-step procedure]</td>
+                            <td>[What should happen]</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; page-break-inside: avoid;">
+                    <tbody style="border: none;">
+                        <tr style="border: none;">
+                            <td style="width: 50%; vertical-align: top; border: none; padding: 0 10px 0 0;">
+                                <p><strong>Project Manager</strong></p>
+                                <p style="margin-top: 1.5rem;">Signature: __________________________</p>
+                                <p>Date: __________________________</p>
+                            </td>
+                            <td style="width: 50%; vertical-align: top; border: none; padding: 0 0 0 10px;">
+                                <p><strong>QA / Approved By</strong></p>
+                                <p style.margin-top: 1.5rem;>Signature: __________________________</p>
+                                <p>Date: __________________________</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                Start directly with the first <h2> tag. Do not include <html> or <body> tags.
+            `;
+
+            try {
+                const generatedHtml = await callGeminiAPI(prompt);
+                preview.content.innerHTML = generatedHtml;
+                setLoadingState(false);
+            } catch (error) {
+                console.error("Test plan generation failed:", error);
+                setLoadingState(false, error.message);
+            }
+        }
+
+        /**
+         * Call the Gemini API
+         */
+        async function callGeminiAPI(prompt, retries = 3, delay = 1000) {
+            const apiKey = getApiKey();
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.3,
+                    topK: 1,
+                    topP: 1,
+                    maxOutputTokens: 8192,
+                    responseMimeType: "text/plain",
+                },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                ],
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(res => setTimeout(res, delay));
+                        return callGeminiAPI(prompt, retries - 1, delay * 2);
+                    }
+                    const errorBody = await response.json();
+                    throw new Error(`API Error: ${response.status} ${response.statusText}. ${errorBody.error?.message || ''}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else if (data.promptFeedback) {
+                    throw new Error(`Content blocked: ${data.promptFeedback.blockReason}`);
+                } else {
+                    throw new Error("No content generated.");
+                }
+
+            } catch (error) {
+                console.error('Gemini API call failed:', error);
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return callGeminiAPI(prompt, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        /**
+         * Export preview content to a .xlsx file
+         */
+        function exportToExcel() {
+            const title = inputs.title.value || "Test_Plan";
+            const filename = `${title.replace(/ /g, '_')}_Checklist.xlsx`;
+            const wb = XLSX.utils.book_new();
+            let ws_data = [];
+            ws_data.push([preview.title.textContent]);
+            ws_data.push([]);
+            const contentNodes = preview.content.children;
+            for (const node of contentNodes) {
+                const tagName = node.tagName.toLowerCase();
+                if (tagName === 'h2') {
+                    ws_data.push([node.textContent]);
+                } else if (tagName === 'h3') {
+                    ws_data.push([`  ${node.textContent}`]);
+                } else if (tagName === 'p') {
+                    ws_data.push([node.textContent]);
+                } else if (tagName === 'ul') {
+                    for (const li of node.querySelectorAll('li')) {
+                        ws_data.push([`- ${li.textContent}`]);
+                    }
+                } else if (tagName === 'table') {
+                    ws_data.push([]);
+                    const table_sheet = XLSX.utils.table_to_sheet(node);
+                    const table_data = XLSX.utils.sheet_to_json(table_sheet, { header: 1 });
+                    ws_data = ws_data.concat(table_data);
+                    ws_data.push([]);
+                }
+            }
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, "Checklist");
+            XLSX.writeFile(wb, filename);
+        }
+
+        /**
+         * Copy preview content to clipboard as rich HTML (Fixed)
+         */
+        function copyForDocs() {
+            const originalBodyStyle = document.body.style.backgroundColor;
+            document.body.style.backgroundColor = '#ffffff';
+            const copyContainer = document.createElement('div');
+            copyContainer.style.cssText = "background-color: #ffffff; color: #111827; font-family: 'Inter', sans-serif;";
+            const header = document.getElementById('preview-header');
+            const title = document.getElementById('preview-title');
+            const content = document.getElementById('preview-content');
+            if (header) copyContainer.appendChild(header.cloneNode(true));
+            if (title) copyContainer.appendChild(title.cloneNode(true));
+            if (content) copyContainer.appendChild(content.cloneNode(true));
+            
+            const headerEl = copyContainer.querySelector('#preview-header');
+            if (headerEl) {
+                headerEl.style.cssText = "display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #d1d5db; width: 100%; background-color: #ffffff;";
+                const logoEl = copyContainer.querySelector('#preview-logo');
+                if (logoEl) logoEl.style.cssText = "height: 4rem; display: block; background-color: transparent;";
+                const addressEl = headerEl.querySelector('div');
+                if (addressEl) addressEl.style.cssText = "text-align: right; font-size: 0.75rem; color: #4b5563; line-height: 1.25; background-color: #ffffff;";
+            }
+            const titleEl = copyContainer.querySelector('#preview-title');
+            if (titleEl) titleEl.style.cssText = "font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center; background-color: #ffffff; color: #111827;";
+            const contentEl = copyContainer.querySelector('#preview-content');
+            if (contentEl) {
+                contentEl.style.cssText = "font-family: 'Inter', sans-serif; color: #111827; background-color: #ffffff;";
+                contentEl.querySelectorAll('h1').forEach(el => {
+                    el.style.cssText = "font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; color: #111827; background-color: #ffffff;";
+                });
+                contentEl.querySelectorAll('h2').forEach(el => {
+                    el.style.cssText = "font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; background-color: #ffffff; color: #1f2937;";
+                });
+                contentEl.querySelectorAll('h3').forEach(el => {
+                    el.style.cssText = "font-size: 1.15rem; font-weight: 600; margin-top: 1.0rem; margin-bottom: 0.5rem; background-color: #ffffff; color: #374151;";
+                });
+                contentEl.querySelectorAll('ul').forEach(el => {
+                    el.style.cssText = "list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; background-color: #ffffff; color: #1f2937;";
+                });
+                contentEl.querySelectorAll('li').forEach(el => {
+                    el.style.cssText = "margin-bottom: 0.25rem; background-color: #ffffff;";
+                });
+                contentEl.querySelectorAll('p').forEach(el => {
+                    el.style.cssText = "margin-bottom: 0.75rem; line-height: 1.5; background-color: #ffffff; color: #111827;";
+                });
+                contentEl.querySelectorAll('table').forEach(el => {
+                    el.style.cssText = "width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; font-size: 0.875rem; background-color: #ffffff;";
+                });
+                contentEl.querySelectorAll('th').forEach(el => {
+                    el.style.cssText = "border: 1px solid #d1d5db; padding: 0.75rem; text-align: left; background-color: #f9fafb; font-weight: 600; color: #111827;";
+                });
+                contentEl.querySelectorAll('td').forEach(el => {
+                    el.style.cssText = "border: 1px solid #d1d5db; padding: 0.75rem; text-align: left; background-color: #ffffff; color: #111827;";
+                });
+                const signatureTable = contentEl.querySelector('table[style*="border-top"]');
+                if (signatureTable) {
+                    signatureTable.style.cssText = "width: 100%; border-collapse: collapse; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; page-break-inside: avoid; background-color: #ffffff;";
+                    signatureTable.querySelectorAll('tbody, tr').forEach(el => {
+                        el.style.cssText = "border: none; background-color: #ffffff;";
+                    });
+                    signatureTable.querySelectorAll('td').forEach(el => {
+                        el.style.cssText = "width: 50%; vertical-align: top; border: none; padding: 0; background-color: #ffffff;";
+                    });
+                    signatureTable.querySelectorAll('p').forEach((p, index) => {
+                        p.style.cssText = "margin-bottom: 0.75rem; background-color: #ffffff; color: #111827;";
+                        if (index === 1 || index === 4) { 
+                            p.style.cssText = "margin-top: 1.5rem; margin-bottom: 0.75rem; background-color: #ffffff; color: #111827;";
+                        }
+                    });
+                }
+            }
+            
+            document.body.appendChild(copyContainer);
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNode(copyContainer);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const originalText = buttons.copy.innerHTML;
+                    buttons.copy.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Copied!
+                    `;
+                    setTimeout(() => {
+                        buttons.copy.innerHTML = originalText;
+                    }, 2500);
+                } else {
+                    throw new Error('Copy command was unsuccessful');
+                }
+            } catch (err) {
+                console.error('Failed to copy content: ', err);
+                const originalText = buttons.copy.innerHTML;
+                buttons.copy.innerHTML = 'Copy Failed';
+                buttons.copy.classList.add('ios-btn-danger');
+                setTimeout(() => {
+                    buttons.copy.innerHTML = originalText;
+                    buttons.copy.classList.remove('ios-btn-danger');
+                }, 2500);
+            } finally {
+                document.body.removeChild(copyContainer);
+                selection.removeAllRanges();
+                document.body.style.backgroundColor = originalBodyStyle;
+            }
+        }
+
+        /**
+         * Copy preview content to clipboard as Tab-Separated Values (TSV) for Google Sheets (Fixed)
+         */
+        function copyForSheets() {
+            let tsv = '';
+            tsv += '"ViTrox Technologies Sdn. Bhd."\n';
+            tsv += '"746, Persiaran Cassia Selatan 3"\n';
+            tsv += '"14110 Bandar Cassia, Pulau Pinang, Malaysia"\n';
+            tsv += '"Tel: (+604) 545 9988"\n\n';
+            tsv += preview.title.textContent + '\n\n';
+            const contentNodes = preview.content.children;
+            for (const node of contentNodes) {
+                const tagName = node.tagName.toLowerCase();
+                if (tagName === 'h2' || tagName === 'h3' || tagName === 'p') {
+                    tsv += `"${node.textContent.trim()}"\n`;
+                } else if (tagName === 'ul') {
+                    for (const li of node.querySelectorAll('li')) {
+                        tsv += `"\t• ${li.textContent.trim()}"\n`;
+                    }
+                     tsv += '\n';
+                } else if (tagName === 'table') {
+                    tsv += '\n';
+                    node.querySelectorAll('tr').forEach(tr => {
+                        const row = [];
+                        tr.querySelectorAll('th, td').forEach(cell => {
+                            let text = cell.textContent.trim().replace(/\s+/g, ' ');
+                            text = `"${text.replace(/"/g, '""')}"`;
+                            row.push(text);
+                        });
+                        tsv += row.join('\t') + '\n';
+                    });
+                    tsv += '\n';
+                }
+            }
+            const textarea = document.createElement('textarea');
+            textarea.value = tsv;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = 0;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const originalText = buttons.copySheet.innerHTML;
+                    buttons.copySheet.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Copied!
+                    `;
+                    setTimeout(() => {
+                        buttons.copySheet.innerHTML = originalText;
+                    }, 2500);
+                } else {
+                    throw new Error('Copy command was unsuccessful');
+                }
+            } catch (err) {
+                console.error('Failed to copy content: ', err);
+                const originalText = buttons.copySheet.innerHTML;
+                buttons.copySheet.innerHTML = 'Copy Failed';
+                buttons.copySheet.classList.add('ios-btn-danger');
+                setTimeout(() => {
+                    buttons.copySheet.innerHTML = originalText;
+                    buttons.copySheet.classList.remove('ios-btn-danger');
+                }, 2500);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /**
+         * Load logo from file input
+         */
+        function loadLogo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Image = e.target.result;
+                try {
+                    localStorage.setItem('vitroxLogoBase64', base64Image);
+                    preview.logo.src = base64Image;
+                    preview.logo.style.display = 'block';
+                    preview.logoStatus.textContent = "Logo loaded successfully. It will be saved for next time.";
+                    preview.logoStatus.style.color = 'green';
+                    buttons.loadLogoButton.textContent = 'Change Logo';
+                    buttons.clearLogoButton.style.display = 'inline-block';
+                } catch (error) {
+                    console.error("Error saving logo to localStorage: ", error);
+                    preview.logoStatus.textContent = "Could not save logo. Local storage may be full or disabled.";
+                    preview.logoStatus.style.color = 'red';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Clear loaded logo
+         */
+        function clearLogo() {
+            try {
+                localStorage.removeItem('vitroxLogoBase64');
+            } catch (error) {
+                console.error("Could not access localStorage: ", error);
+            }
+            preview.logo.src = '';
+            preview.logo.style.display = 'none';
+            preview.logoStatus.textContent = "Please load the logo to embed it in the export.";
+            preview.logoStatus.style.color = '#6b7280';
+            buttons.loadLogoButton.textContent = 'Load Logo';
+            buttons.clearLogoButton.style.display = 'none';
+            inputs.logoUploader.value = null;
+        }
+
+        /**
+         * Manage loading/error UI states
+         */
+        function setLoadingState(isLoading, errorMessage = null) {
+            if (isLoading) {
+                statusElements.loading.classList.remove('hidden');
+                statusElements.error.classList.add('hidden');
+                buttons.generate.disabled = true;
+            } else {
+                statusElements.loading.classList.add('hidden');
+                buttons.generate.disabled = false;
+                if (errorMessage) {
+                    statusElements.error.textContent = `Error: ${errorMessage}`;
+                    statusElements.error.classList.remove('hidden');
+                } else {
+                    statusElements.error.classList.add('hidden');
+                }
+            }
+        }
+        
+        /**
+         * Initialize the app on load
+         */
+        function init() {
+            try {
+                const savedLogo = localStorage.getItem('vitroxLogoBase64');
+                if (savedLogo) {
+                    preview.logo.src = savedLogo;
+                    preview.logo.style.display = 'block';
+                    preview.logoStatus.textContent = "Logo loaded from memory. You can change it if you like.";
+                    preview.logoStatus.style.color = 'green';
+                    buttons.loadLogoButton.textContent = 'Change Logo';
+                    buttons.clearLogoButton.style.display = 'inline-block';
+                } else {
+                    preview.logoStatus.textContent = "Please load the logo to embed it in the export.";
+                    preview.logoStatus.style.color = ''; // Remove inline style, let class handle it
+                    // This was added in the previous fix to make helper text dark-mode-aware
+                    preview.logoStatus.classList.add('text-gray-500', 'dark:text-gray-300');
+                }
+            } catch (error) {
+                console.error("Could not access localStorage: ", error);
+                preview.logoStatus.textContent = "Error: Could not access browser storage.";
+                preview.logoStatus.style.color = 'red';
+            }
+            handleInputChange();
+        }
+        
+        initTheme(); // Run theme initializer first
+        init(); // Run the main initialization function
+
+    </script>
+</body>
+</html>
